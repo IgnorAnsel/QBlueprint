@@ -18,6 +18,8 @@ set(PROJECT_SOURCES
         mainwindow.h
         mainwindow.ui
         qblueprint.h qblueprint.cpp qblueprint.ui
+        qblueprintnode.h qblueprintnode.cpp
+        qblueprintport.h qblueprintport.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
