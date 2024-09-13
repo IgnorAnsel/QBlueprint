@@ -5,7 +5,9 @@
 #include <QPainter>
 #include <vector>
 #include "qblueprintport.h"
-#
+#include "qblueprintconnection.h"
+#include <QGraphicsSceneMouseEvent>
+#include <QGraphicsScene>
 class QBlueprintNode : public QGraphicsItem
 {
 public:
@@ -24,6 +26,7 @@ public:
     void addInputPort(const QString &name);
     void addOutputPort(const QString &name);
 
+    void startConnectionDrag(const QPointF &startPos);
 protected:
     // 鼠标交互事件
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
@@ -31,6 +34,8 @@ protected:
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 
 private:
+    QBlueprintPort *m_draggingPort;
+    QBlueprintConnection *m_currentConnection;
     std::vector<QBlueprintPort *> inputPorts;   // 存储输入端口
     std::vector<QBlueprintPort *> outputPorts;  // 存储输出端口
 };

@@ -110,20 +110,90 @@ void QBlueprintNode::addOutputPort(const QString &name)
     outputPorts.push_back(port);
 }
 
+//void QBlueprintNode::mousePressEvent(QGraphicsSceneMouseEvent *event)
+//{
+//    // 可以在此实现鼠标点击事件
+//    QGraphicsItem::mousePressEvent(event);
+//}
+
+//void QBlueprintNode::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+//{
+//    // 实现节点拖动逻辑
+//    QGraphicsItem::mouseMoveEvent(event);
+//}
+
+//void QBlueprintNode::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
+//{
+//    // 鼠标释放事件
+//    QGraphicsItem::mouseReleaseEvent(event);
+//}
 void QBlueprintNode::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
-    // 可以在此实现鼠标点击事件
+    // 检查是否点击了端口
     QGraphicsItem::mousePressEvent(event);
+
+    // 如果点击在某个端口上
+    for (auto *port : inputPorts)
+    {
+        if (port->contains(event->pos()))
+        {
+            m_draggingPort = port;
+            startConnectionDrag(event->scenePos());
+            return;
+        }
+    }
+
+    for (auto *port : outputPorts)
+    {
+        if (port->contains(event->pos()))
+        {
+            m_draggingPort = port;
+            startConnectionDrag(event->scenePos());
+            return;
+        }
+    }
 }
 
 void QBlueprintNode::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
-    // 实现节点拖动逻辑
     QGraphicsItem::mouseMoveEvent(event);
+
+    if (m_draggingPort && m_currentConnection)
+    {
+        // 更新临时连线的位置
+        m_currentConnection->updatePosition(m_draggingPort->centerPos(), event->scenePos());
+    }
 }
 
 void QBlueprintNode::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
-    // 鼠标释放事件
     QGraphicsItem::mouseReleaseEvent(event);
+
+    // 释放连接时
+    if (m_draggingPort && m_currentConnection)
+    {
+        QGraphicsItem *targetItem = scene()->itemAt(event->scenePos(), QTransform());
+        QBlueprintPort *targetPort = dynamic_cast<QBlueprintPort *>(targetItem);
+
+        if (targetPort && targetPort->portType() != m_draggingPort->portType())
+        {
+            // 连接两个端口
+            m_currentConnection->setEndPort(targetPort);
+        }
+        else
+        {
+            // 如果释放时没有有效的端口，则取消连接
+            delete m_currentConnection;
+        }
+
+        m_currentConnection = nullptr;
+        m_draggingPort = nullptr;
+    }
+}
+
+void QBlueprintNode::startConnectionDrag(const QPointF &startPos)
+{
+    // 创建临时连线
+    m_currentConnection = new QBlueprintConnection(m_draggingPort, nullptr);
+    scene()->addItem(m_currentConnection); // 将连接添加到场景中
 }
