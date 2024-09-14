@@ -3,7 +3,6 @@
 
 #include <QGraphicsItem>
 #include <QPainter>
-
 class QBlueprintPort : public QGraphicsItem
 {
 public:
@@ -25,7 +24,8 @@ public:
     // 设置和获取端口名称
     QString name() const { return m_name; }
     void setName(const QString &name) { m_name = name; }
-
+protected:
+    //void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 private:
     PortType m_type;
     QString m_name;  // 端口名称

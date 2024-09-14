@@ -12,7 +12,7 @@ class QBlueprintNode : public QGraphicsItem
 {
 public:
     QBlueprintNode(QGraphicsItem *parent = nullptr);
-
+    ~QBlueprintNode();
     // 重载boundingRect()方法，定义绘制区域
     QRectF boundingRect() const override;
 

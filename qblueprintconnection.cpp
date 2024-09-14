@@ -1,4 +1,5 @@
 #include "qblueprintconnection.h"
+#include <QPainterPath>
 
 QBlueprintConnection::QBlueprintConnection(QBlueprintPort *startPort, QBlueprintPort *endPort, QGraphicsItem *parent)
     : QGraphicsItem(parent), m_startPort(startPort), m_endPort(endPort)
@@ -25,7 +26,7 @@ void QBlueprintConnection::updatePosition(const QPointF &startPos, const QPointF
 QRectF QBlueprintConnection::boundingRect() const
 {
     // 计算连接线的边界矩形
-    return QRectF(m_startPoint, m_endPoint).normalized();
+    return QRectF(m_startPoint, m_endPoint).normalized().adjusted(-5, -5, 5, 5);
 }
 
 void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -34,8 +35,18 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
     QPen pen(Qt::white, 2);  // 2 像素宽的白色线条
     painter->setPen(pen);
 
-    // 绘制连接线
-    painter->drawLine(m_startPoint, m_endPoint);
+    // 创建贝塞尔曲线
+    QPainterPath path(m_startPoint);
+
+    // 计算控制点，控制点可以调整曲线的形状
+    QPointF controlPoint1 = m_startPoint + QPointF((m_endPoint.x() - m_startPoint.x()) / 2, 0);
+    QPointF controlPoint2 = m_endPoint + QPointF((m_startPoint.x() - m_endPoint.x()) / 2, 0);
+
+    // 创建二次贝塞尔曲线
+    path.cubicTo(controlPoint1, controlPoint2, m_endPoint);
+
+    // 绘制曲线
+    painter->drawPath(path);
 }
 
 void QBlueprintConnection::setEndPort(QBlueprintPort *endPort)

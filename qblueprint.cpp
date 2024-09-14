@@ -23,7 +23,9 @@ QBlueprint::QBlueprint(QWidget *parent)
     scene->addItem(node);
 
     centerOn(node);  // 聚焦到节点
-
+    QBlueprintNode *node2 = new QBlueprintNode();
+    node2->setPos(1000, 1000);  // 设置初始位置为 (100, 100)
+    scene->addItem(node2);
 
 }
 

@@ -1,13 +1,19 @@
-#include "qblueprintport.h".h"
+#include "qblueprintport.h"
 
 QBlueprintPort::QBlueprintPort(PortType type, const QString &name, QGraphicsItem *parent)
     : QGraphicsItem(parent), m_type(type), m_name(name)
 {
+    setFlag(QGraphicsItem::ItemIsMovable, false);
+    setFlag(QGraphicsItem::ItemIsSelectable, true);
+
 }
 
 QRectF QBlueprintPort::boundingRect() const
 {
+    //return QRectF(-10, -10, 20, 20);  // 扩大范围以便检测
     return QRectF(0, 0, 10, 10);  // 端口的大小为 10x10
+    //qDebug() << "QBlueprintPort boundingRect:" << rect;
+
 }
 
 void QBlueprintPort::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -47,8 +53,6 @@ void QBlueprintPort::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
         painter->drawText(textRect, Qt::AlignRight | Qt::AlignVCenter, m_name);  // 名称放在左侧，右对齐
     }
 }
-
-
 
 QPointF QBlueprintPort::centerPos() const
 {
