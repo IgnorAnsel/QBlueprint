@@ -140,7 +140,6 @@ void QBlueprint::mousePressEvent(QMouseEvent *event)
     QBlueprintNode *node = dynamic_cast<QBlueprintNode*>(item);
     if (node)
     {
-        qDebug() << "ok";
         // 使用访问器方法获取端口列表
         const auto& inputPorts = node->getInputPorts();
         const auto& outputPorts = node->getOutputPorts();

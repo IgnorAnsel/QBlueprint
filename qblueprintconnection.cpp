@@ -10,6 +10,8 @@ QBlueprintConnection::QBlueprintConnection(QBlueprintPort *startPort, QBlueprint
         m_endPoint = endPort->centerPos();
     else
         m_endPoint = m_startPoint;  // 如果没有终点端口，临时设置终点为起点
+    setZValue(2);
+    setFlag(QGraphicsItem::ItemIsSelectable, false);
 
     updatePosition(m_startPoint, m_endPoint);  // 初始化位置
 }
@@ -39,8 +41,28 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
     QPainterPath path(m_startPoint);
 
     // 计算控制点，控制点可以调整曲线的形状
-    QPointF controlPoint1 = m_startPoint + QPointF((m_endPoint.x() - m_startPoint.x()) / 2, 0);
-    QPointF controlPoint2 = m_endPoint + QPointF((m_startPoint.x() - m_endPoint.x()) / 2, 0);
+    QPointF controlPoint1;
+    QPointF controlPoint2;
+
+    // 根据起点和终点的位置调整控制点
+    qreal dx = m_endPoint.x() - m_startPoint.x();
+    qreal dy = m_endPoint.y() - m_startPoint.y();
+    qreal offset = qAbs(dx) * 0.5; // 控制点偏移量，值越大曲线弯曲越明显
+
+    // 如果起点在终点的左侧
+    if (dx > 0)
+    {
+        controlPoint1 = m_startPoint + QPointF(offset, 0);
+        controlPoint2 = m_endPoint - QPointF(offset, 0);
+    }
+    else
+    {
+        // 如果起点在终点的右侧，曲线向外弯曲
+        controlPoint1 = m_startPoint + QPointF(offset, 0);
+        controlPoint2 = m_endPoint - QPointF(offset, 0);
+        controlPoint1.setY(m_startPoint.y() - qAbs(dx) * 0.2); // 向上或向下调整控制点
+        controlPoint2.setY(m_endPoint.y() + qAbs(dx) * 0.2);
+    }
 
     // 创建二次贝塞尔曲线
     path.cubicTo(controlPoint1, controlPoint2, m_endPoint);
@@ -48,6 +70,8 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
     // 绘制曲线
     painter->drawPath(path);
 }
+
+
 
 void QBlueprintConnection::setEndPort(QBlueprintPort *endPort)
 {
@@ -67,5 +91,19 @@ QBlueprintPort* QBlueprintConnection::endPort() const
 {
     return m_endPort;
 }
+QPainterPath QBlueprintConnection::shape() const
+{
+    QPainterPath path(m_startPoint);
 
+    // 计算控制点
+    QPointF controlPoint1 = m_startPoint + QPointF((m_endPoint.x() - m_startPoint.x()) / 2, 0);
+    QPointF controlPoint2 = m_endPoint + QPointF((m_startPoint.x() - m_endPoint.x()) / 2, 0);
+
+    path.cubicTo(controlPoint1, controlPoint2, m_endPoint);
+
+    // 使用路径描边器生成较细的形状
+    QPainterPathStroker stroker;
+    stroker.setWidth(6); // 线的宽度
+    return stroker.createStroke(path);
+}
 

@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QPen>
 #include "qblueprintport.h"
+#include <QPainterPathStroker>
 
 class QBlueprintConnection : public QGraphicsItem
 {
@@ -22,6 +23,8 @@ public:
 
     QBlueprintPort *endPort() const;
     QBlueprintPort *startPort() const;
+protected:
+    QPainterPath shape() const override;
 private:
     QBlueprintPort *m_startPort;  // 起始端口
     QBlueprintPort *m_endPort;    // 终点端口

@@ -19,7 +19,7 @@ QBlueprintNode::QBlueprintNode(QGraphicsItem *parent)
     addInputPort("Input3");
     addOutputPort("Output2341");
     addOutputPort("Output2");
-
+    setZValue(1);
 }
 QBlueprintNode::~QBlueprintNode()
 {
@@ -119,14 +119,12 @@ void QBlueprintNode::addOutputPort()
 void QBlueprintNode::addInputPort(const QString &name)
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, name, this);
-    port->setZValue(1);  // 设置 Z 值
     inputPorts.push_back(port);
 }
 
 void QBlueprintNode::addOutputPort(const QString &name)
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, name, this);
-    port->setZValue(1);  // 设置 Z 值
     outputPorts.push_back(port);
 }
 
