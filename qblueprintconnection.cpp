@@ -33,43 +33,77 @@ QRectF QBlueprintConnection::boundingRect() const
 
 void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    // 设置连接线的样式
-    QPen pen(Qt::white, 2);  // 2 像素宽的白色线条
+    QPen pen;
+
+    if (isSelected)
+    {
+        // 使用渐变效果
+        QLinearGradient gradient(m_startPoint, m_endPoint);
+        gradient.setColorAt(0, Qt::white);
+        gradient.setColorAt(0.5, Qt::yellow); // 在中间添加一个渐变点
+        gradient.setColorAt(1, Qt::transparent);
+
+        // 设置连接线的样式，将渐变应用到笔刷
+        pen = QPen(QBrush(gradient), 2);  // 使用渐变作为画笔
+    }
+    else
+    {
+        // 使用普通线条
+        pen = QPen(Qt::white, 2);
+    }
+
     painter->setPen(pen);
 
     // 创建贝塞尔曲线
     QPainterPath path(m_startPoint);
 
-    // 计算控制点，控制点可以调整曲线的形状
+    // 计算控制点
     QPointF controlPoint1;
     QPointF controlPoint2;
 
-    // 根据起点和终点的位置调整控制点
+    // 获取起点和终点的位置差
     qreal dx = m_endPoint.x() - m_startPoint.x();
     qreal dy = m_endPoint.y() - m_startPoint.y();
-    qreal offset = qAbs(dx) * 0.5; // 控制点偏移量，值越大曲线弯曲越明显
+    qreal offset = qAbs(dx) * 0.6; // 控制点偏移量
 
-    // 如果起点在终点的左侧
-    if (dx > 0)
+    if (m_startPort->portType() == QBlueprintPort::Output)
     {
-        controlPoint1 = m_startPoint + QPointF(offset, 0);
-        controlPoint2 = m_endPoint - QPointF(offset, 0);
+        // 起点是 Output 端口
+        if (dx > 0) // 终点在起点的右侧
+        {
+            controlPoint1 = m_startPoint + QPointF(offset, 0);
+            controlPoint2 = m_endPoint - QPointF(offset, 0);
+        }
+        else // 终点在起点的左侧
+        {
+            controlPoint1 = m_startPoint + QPointF(offset, dy * 0.5); // 向下或向上调整控制点
+            controlPoint2 = m_endPoint - QPointF(offset, -dy * 0.5);
+        }
     }
-    else
+    else if (m_startPort->portType() == QBlueprintPort::Input)
     {
-        // 如果起点在终点的右侧，曲线向外弯曲
-        controlPoint1 = m_startPoint + QPointF(offset, 0);
-        controlPoint2 = m_endPoint - QPointF(offset, 0);
-        controlPoint1.setY(m_startPoint.y() - qAbs(dx) * 0.2); // 向上或向下调整控制点
-        controlPoint2.setY(m_endPoint.y() + qAbs(dx) * 0.2);
+        // 起点是 Input 端口
+        if (dx > 0) // 终点在起点的右侧
+        {
+            controlPoint1 = m_startPoint - QPointF(offset, 0);
+            controlPoint2 = m_endPoint + QPointF(offset, 0);
+        }
+        else // 终点在起点的左侧
+        {
+            controlPoint1 = m_startPoint - QPointF(offset, -dy * 0.5); // 向上或向下调整控制点
+            controlPoint2 = m_endPoint + QPointF(offset, dy * 0.5);
+        }
     }
 
-    // 创建二次贝塞尔曲线
+    // 创建贝塞尔曲线
     path.cubicTo(controlPoint1, controlPoint2, m_endPoint);
 
     // 绘制曲线
     painter->drawPath(path);
 }
+
+
+
 
 
 
@@ -106,4 +140,17 @@ QPainterPath QBlueprintConnection::shape() const
     stroker.setWidth(6); // 线的宽度
     return stroker.createStroke(path);
 }
+
+void QBlueprintConnection::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    // 切换选中状态
+    isSelected = !isSelected;
+
+    // 重绘线条
+    update();
+
+    // 保持默认的事件处理
+    QGraphicsItem::mousePressEvent(event);
+}
+
 

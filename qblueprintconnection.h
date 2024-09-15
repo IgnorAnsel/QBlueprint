@@ -25,11 +25,13 @@ public:
     QBlueprintPort *startPort() const;
 protected:
     QPainterPath shape() const override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 private:
     QBlueprintPort *m_startPort;  // 起始端口
     QBlueprintPort *m_endPort;    // 终点端口
     QPointF m_startPoint;         // 连线的起点坐标
     QPointF m_endPoint;           // 连线的终点坐标
+    bool isSelected = false;      // 标记线条是否被选中
 };
 
 #endif // QBLUEPRINTCONNECTION_H
