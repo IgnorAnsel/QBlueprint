@@ -6,9 +6,11 @@
 #include <QPen>
 #include "qblueprintport.h"
 #include <QPainterPathStroker>
-
-class QBlueprintConnection : public QGraphicsItem
+#include <QTimer>
+#include <QObject>
+class QBlueprintConnection : public QObject, public QGraphicsItem
 {
+    Q_OBJECT
 public:
     QBlueprintConnection(QBlueprintPort *startPort, QBlueprintPort *endPort, QGraphicsItem *parent = nullptr);
 
@@ -32,6 +34,10 @@ private:
     QPointF m_startPoint;         // 连线的起点坐标
     QPointF m_endPoint;           // 连线的终点坐标
     bool isSelected = false;      // 标记线条是否被选中
+    QTimer* animationTimer;  // 定时器用于驱动动画
+    qreal animationProgress;  // 动画进度 [0, 1]
+    void setupAnimation();  // 设置动画
+    void clearSelection();
 };
 
 #endif // QBLUEPRINTCONNECTION_H

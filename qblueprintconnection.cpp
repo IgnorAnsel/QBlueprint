@@ -1,8 +1,9 @@
 #include "qblueprintconnection.h"
 #include <QPainterPath>
-
+#include <QTimer>
+#include "qblueprint.h"
 QBlueprintConnection::QBlueprintConnection(QBlueprintPort *startPort, QBlueprintPort *endPort, QGraphicsItem *parent)
-    : QGraphicsItem(parent), m_startPort(startPort), m_endPort(endPort)
+    : QGraphicsItem(parent), m_startPort(startPort), m_endPort(endPort), animationProgress(0.0)
 {
     // 初始化起点和终点坐标
     m_startPoint = startPort->centerPos();
@@ -14,6 +15,15 @@ QBlueprintConnection::QBlueprintConnection(QBlueprintPort *startPort, QBlueprint
     setFlag(QGraphicsItem::ItemIsSelectable, false);
 
     updatePosition(m_startPoint, m_endPoint);  // 初始化位置
+
+    // 初始化定时器
+    animationTimer = new QTimer(this);
+    connect(animationTimer, &QTimer::timeout, this, [this]() {
+        animationProgress += 0.01;  // 每次更新增加动画进度
+        if (animationProgress > 1.0)  // 超过1则重置为0
+            animationProgress = 0.0;
+        update();  // 触发重绘
+    });
 }
 
 void QBlueprintConnection::updatePosition(const QPointF &startPos, const QPointF &endPos)
@@ -39,9 +49,15 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
     {
         // 使用渐变效果
         QLinearGradient gradient(m_startPoint, m_endPoint);
-        gradient.setColorAt(0, Qt::white);
-        gradient.setColorAt(0.5, Qt::yellow); // 在中间添加一个渐变点
-        gradient.setColorAt(1, Qt::transparent);
+
+        // 动态调整渐变的颜色位置, 使用多个渐变点模拟流动
+        int numPoints = 20;  // 渐变点的数量
+        for (int i = 0; i <= numPoints; ++i) {
+            // 计算每个渐变点的位置和颜色
+            qreal position = fmod(animationProgress + static_cast<double>(i) / numPoints, 1.0);
+            QColor color = (i % 2 == 0) ? Qt::green : Qt::white;  // 交替颜色
+            gradient.setColorAt(position, color);
+        }
 
         // 设置连接线的样式，将渐变应用到笔刷
         pen = QPen(QBrush(gradient), 2);  // 使用渐变作为画笔
@@ -68,29 +84,27 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
 
     if (m_startPort->portType() == QBlueprintPort::Output)
     {
-        // 起点是 Output 端口
-        if (dx > 0) // 终点在起点的右侧
+        if (dx > 0)
         {
             controlPoint1 = m_startPoint + QPointF(offset, 0);
             controlPoint2 = m_endPoint - QPointF(offset, 0);
         }
-        else // 终点在起点的左侧
+        else
         {
-            controlPoint1 = m_startPoint + QPointF(offset, dy * 0.5); // 向下或向上调整控制点
+            controlPoint1 = m_startPoint + QPointF(offset, dy * 0.5);
             controlPoint2 = m_endPoint - QPointF(offset, -dy * 0.5);
         }
     }
     else if (m_startPort->portType() == QBlueprintPort::Input)
     {
-        // 起点是 Input 端口
-        if (dx > 0) // 终点在起点的右侧
+        if (dx > 0)
         {
             controlPoint1 = m_startPoint - QPointF(offset, 0);
             controlPoint2 = m_endPoint + QPointF(offset, 0);
         }
-        else // 终点在起点的左侧
+        else
         {
-            controlPoint1 = m_startPoint - QPointF(offset, -dy * 0.5); // 向上或向下调整控制点
+            controlPoint1 = m_startPoint - QPointF(offset, -dy * 0.5);
             controlPoint2 = m_endPoint + QPointF(offset, dy * 0.5);
         }
     }
@@ -101,6 +115,8 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
     // 绘制曲线
     painter->drawPath(path);
 }
+
+
 
 
 
@@ -143,8 +159,11 @@ QPainterPath QBlueprintConnection::shape() const
 
 void QBlueprintConnection::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
+    clearSelection();
+
     // 切换选中状态
-    isSelected = !isSelected;
+    isSelected = true;
+    animationTimer->start(50);  // 启动动画，每50毫秒更新一次
 
     // 重绘线条
     update();
@@ -152,5 +171,21 @@ void QBlueprintConnection::mousePressEvent(QGraphicsSceneMouseEvent *event)
     // 保持默认的事件处理
     QGraphicsItem::mousePressEvent(event);
 }
+// 静态方法：清除所有连接的选中状态
+void QBlueprintConnection::clearSelection()
+{
+    QGraphicsScene *currentScene = this->scene();
+    if (!currentScene) return;
 
+    QBlueprint *blueprintView = dynamic_cast<QBlueprint*>(currentScene->views().first());
+    if (blueprintView)
+    {
+        for (QBlueprintConnection *connection : blueprintView->connections)
+        {
+            connection->isSelected = false;
+            connection->animationTimer->stop();  // 停止动画
+            connection->update();
+        }
+    }
+}
 

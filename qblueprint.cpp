@@ -25,7 +25,7 @@ QBlueprint::QBlueprint(QWidget *parent)
     centerOn(node);  // 聚焦到节点
     QBlueprintNode *node2 = new QBlueprintNode();
     node2->addInputPort("412");
-    node2->setPos(1000, 1000);  // 设置初始位置为 (100, 100)
+    node2->setPos(100, 100);  // 设置初始位置为 (100, 100)
     scene->addItem(node2);
 
 }
