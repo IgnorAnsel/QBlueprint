@@ -114,7 +114,8 @@ void QBlueprint::wheelEvent(QWheelEvent *event)
     // 调整视图的中心，使得缩放后的鼠标位置保持不变
     setTransformationAnchor(QGraphicsView::NoAnchor);
     translate(delta.x(), delta.y());
-
+    // 在缩放后更新所有连接的位置
+    updateAllConnections();
     event->accept();  // 接受事件
 }
 void QBlueprint::mousePressEvent(QMouseEvent *event)
@@ -236,6 +237,18 @@ void QBlueprint::updateConnectionsForPort(QBlueprintPort *port)
         }
     }
 }
+
+void QBlueprint::updateAllConnections()
+{
+    for (QBlueprintConnection* connection : connections)
+    {
+        if (connection->startPort() && connection->endPort())
+        {
+            connection->updatePosition(connection->startPort()->centerPos(), connection->endPort()->centerPos());
+        }
+    }
+}
+
 
 // 添加连接到列表中
 void QBlueprint::addConnection(QBlueprintConnection* connection)

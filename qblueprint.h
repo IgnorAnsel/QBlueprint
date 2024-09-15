@@ -41,6 +41,7 @@ private:
     QBlueprintPort *m_draggingPort = nullptr;
     QBlueprintConnection *m_currentConnection = nullptr;
     void startConnectionDrag(const QPointF &startPos);
+    void updateAllConnections();
 };
 
 #endif // QBLUEPRINT_H
