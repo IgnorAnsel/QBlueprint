@@ -13,12 +13,6 @@ QBlueprintNode::QBlueprintNode(QGraphicsItem *parent)
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
     setFlag(QGraphicsItem::ItemAcceptsInputMethod, true);
 
-    // 初始化节点时，添加两个输入和两个输出端口
-    addInputPort("Input");
-    addInputPort("Input2");
-    addInputPort("Input3");
-    addOutputPort("Output2341");
-    addOutputPort("Output2");
     setZValue(1);
 }
 QBlueprintNode::~QBlueprintNode()
@@ -83,7 +77,7 @@ void QBlueprintNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
 
     // 设置标题区域
     QRectF titleRect = QRectF(rect.left(), rect.top(), rect.width(), 30);  // 标题区域高度为30
-    painter->drawText(titleRect, Qt::AlignCenter, "Node");  // 居中绘制标题
+    painter->drawText(titleRect, Qt::AlignCenter, m_name);  // 居中绘制标题
 
     // 在标题和端口区域之间绘制一条分割线
     painter->setPen(QPen(Qt::black, 1));  // 设置线条颜色和宽度
@@ -126,6 +120,11 @@ void QBlueprintNode::addOutputPort(const QString &name)
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, name, this);
     outputPorts.push_back(port);
+}
+
+void QBlueprintNode::setNodeTitle(QString name)
+{
+    m_name = name;
 }
 
 QVariant QBlueprintNode::itemChange(GraphicsItemChange change, const QVariant &value)

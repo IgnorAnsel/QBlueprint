@@ -18,18 +18,22 @@ QBlueprint::QBlueprint(QWidget *parent)
     setBackgroundBrush(QColor(30, 30, 30));  // 设置深色背景
 
     // 创建并添加节点到场景中
-    QBlueprintNode *node = new QBlueprintNode();
-    node->setPos(10, 10);  // 设置初始位置为 (100, 100)
-    scene->addItem(node);
-
-    centerOn(node);  // 聚焦到节点
-    QBlueprintNode *node2 = new QBlueprintNode();
-    node2->addInputPort("412");
-    node2->setPos(100, 100);  // 设置初始位置为 (100, 100)
-    scene->addItem(node2);
+    createBlueprintNodes(scene);
 
 }
+void QBlueprint::createBlueprintNodes(QGraphicsScene* scene)
+{
+    // 使用工厂方法基于函数生成节点
+    QBlueprintNode* node = QNodeFactory::createNodeFromFunction(&add, "Addition");
 
+    // 设置节点位置并添加到场景
+    node->setPos(50, 50);
+    scene->addItem(node);
+}
+int QBlueprint::add(int a, int b)
+{
+    return a + b;
+}
 QBlueprint::~QBlueprint()
 {
 

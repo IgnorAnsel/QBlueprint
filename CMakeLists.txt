@@ -21,6 +21,7 @@ set(PROJECT_SOURCES
         qblueprintnode.h qblueprintnode.cpp
         qblueprintport.h qblueprintport.cpp
         qblueprintconnection.h qblueprintconnection.cpp
+        qnodefactory.h qnodefactory.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -28,10 +28,13 @@ public:
 
     const std::vector<QBlueprintPort *>& getInputPorts() const { return inputPorts; }
     const std::vector<QBlueprintPort *>& getOutputPorts() const { return outputPorts; }
+
+    void setNodeTitle(QString name);
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
 private:
+    QString m_name;
     std::vector<QBlueprintPort *> inputPorts;   // 存储输入端口
     std::vector<QBlueprintPort *> outputPorts;  // 存储输出端口
 };
