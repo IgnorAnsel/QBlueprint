@@ -20,6 +20,8 @@ public:
     // 设置终点端口
     void setEndPort(QBlueprintPort *endPort);
 
+    QBlueprintPort *endPort() const;
+    QBlueprintPort *startPort() const;
 private:
     QBlueprintPort *m_startPort;  // 起始端口
     QBlueprintPort *m_endPort;    // 终点端口

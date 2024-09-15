@@ -26,16 +26,12 @@ public:
     void addInputPort(const QString &name);
     void addOutputPort(const QString &name);
 
-    void startConnectionDrag(const QPointF &startPos);
+    const std::vector<QBlueprintPort *>& getInputPorts() const { return inputPorts; }
+    const std::vector<QBlueprintPort *>& getOutputPorts() const { return outputPorts; }
 protected:
-    // 鼠标交互事件
-    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
-    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
 private:
-    QBlueprintPort *m_draggingPort;
-    QBlueprintConnection *m_currentConnection;
     std::vector<QBlueprintPort *> inputPorts;   // 存储输入端口
     std::vector<QBlueprintPort *> outputPorts;  // 存储输出端口
 };

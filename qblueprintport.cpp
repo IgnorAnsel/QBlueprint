@@ -1,5 +1,6 @@
 #include "qblueprintport.h"
-
+#include "qblueprintconnection.h"
+#include "qblueprint.h"
 QBlueprintPort::QBlueprintPort(PortType type, const QString &name, QGraphicsItem *parent)
     : QGraphicsItem(parent), m_type(type), m_name(name)
 {
@@ -57,4 +58,45 @@ void QBlueprintPort::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
 QPointF QBlueprintPort::centerPos() const
 {
     return mapToScene(boundingRect().center());  // 返回端口的中心点
+}
+
+void QBlueprintPort::updateConnections()
+{
+    // 检查当前场景是否存在
+    QGraphicsScene *currentScene = this->scene();
+    if (!currentScene) return;  // 如果场景不存在，直接返回
+
+    QBlueprint *blueprintView = dynamic_cast<QBlueprint*>(currentScene->views().first());
+
+    if (blueprintView)
+    {
+        // 更新该端口相关的所有连接
+        blueprintView->updateConnectionsForPort(this);
+    }
+}
+
+// 移除并删除该端口相关的所有连接
+void QBlueprintPort::removeConnections()
+{
+    QGraphicsScene *currentScene = this->scene();
+    QBlueprint *blueprintView = dynamic_cast<QBlueprint*>(currentScene->views().first());
+
+    if (blueprintView)
+    {
+        std::vector<QBlueprintConnection*> toRemove;
+        // 遍历所有连接，收集与此端口相关的连接
+        for (QBlueprintConnection *connection : blueprintView->connections)
+        {
+            if (connection->startPort() == this || connection->endPort() == this)
+            {
+                toRemove.push_back(connection);
+            }
+        }
+
+        // 删除所有相关连接
+        for (QBlueprintConnection *connection : toRemove)
+        {
+            blueprintView->removeConnection(connection);
+        }
+    }
 }

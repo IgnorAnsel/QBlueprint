@@ -58,3 +58,14 @@ void QBlueprintConnection::setEndPort(QBlueprintPort *endPort)
         updatePosition(m_startPort->centerPos(), m_endPort->centerPos());
     }
 }
+QBlueprintPort* QBlueprintConnection::startPort() const
+{
+    return m_startPort;
+}
+
+QBlueprintPort* QBlueprintConnection::endPort() const
+{
+    return m_endPort;
+}
+
+

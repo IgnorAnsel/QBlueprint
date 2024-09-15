@@ -24,6 +24,7 @@ QBlueprint::QBlueprint(QWidget *parent)
 
     centerOn(node);  // 聚焦到节点
     QBlueprintNode *node2 = new QBlueprintNode();
+    node2->addInputPort("412");
     node2->setPos(1000, 1000);  // 设置初始位置为 (100, 100)
     scene->addItem(node2);
 
@@ -33,6 +34,8 @@ QBlueprint::~QBlueprint()
 {
 
 }
+
+
 // 重载绘制背景方法
 void QBlueprint::drawBackground(QPainter *painter, const QRectF &rect)
 {
@@ -114,4 +117,151 @@ void QBlueprint::wheelEvent(QWheelEvent *event)
 
     event->accept();  // 接受事件
 }
+void QBlueprint::mousePressEvent(QMouseEvent *event)
+{
+    // 将视图坐标转换为场景坐标
+    QPointF scenePos = mapToScene(event->pos());
 
+    // 查找鼠标点击的图元
+    QGraphicsItem *item = scene->itemAt(scenePos, QTransform());
+    qDebug()<< "clicked item:" << item;
+    // 首先检查是否点击在端口上
+    QBlueprintPort *port = dynamic_cast<QBlueprintPort*>(item);
+    if (port)
+    {
+        qDebug() << "Clicked on port:" << port->name();
+        m_draggingPort = port;
+        startConnectionDrag(scenePos);
+        return;
+    }
+
+    // 然后检查是否点击在节点上
+    QBlueprintNode *node = dynamic_cast<QBlueprintNode*>(item);
+    if (node)
+    {
+        qDebug() << "ok";
+        // 使用访问器方法获取端口列表
+        const auto& inputPorts = node->getInputPorts();
+        const auto& outputPorts = node->getOutputPorts();
+
+        // 遍历找到点击的端口
+        for (auto *port : inputPorts)
+        {
+            if (port->contains(port->mapFromScene(scenePos)))
+            {
+                qDebug() << "Clicked on input port:" << port->name();
+                m_draggingPort = port;
+                startConnectionDrag(scenePos);
+                return;
+            }
+        }
+
+        for (auto *port : outputPorts)
+        {
+            if (port->contains(port->mapFromScene(scenePos)))
+            {
+                qDebug() << "Clicked on output port:" << port->name();
+                m_draggingPort = port;
+                startConnectionDrag(scenePos);
+                return;
+            }
+        }
+    }
+
+    QGraphicsView::mousePressEvent(event);
+}
+
+void QBlueprint::mouseMoveEvent(QMouseEvent *event)
+{
+    if (m_draggingPort && m_currentConnection)
+    {
+        // 将视图坐标转换为场景坐标
+        QPointF scenePos = mapToScene(event->pos());
+
+        // 更新临时连线的位置
+        m_currentConnection->updatePosition(m_draggingPort->centerPos(), scenePos);
+    }
+
+    QGraphicsView::mouseMoveEvent(event);
+}
+
+void QBlueprint::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (m_draggingPort && m_currentConnection)
+    {
+        // 将视图坐标转换为场景坐标
+        QPointF scenePos = mapToScene(event->pos());
+
+        // 遍历场景中的所有项目，寻找匹配的端口
+        QBlueprintPort *targetPort = nullptr;
+        for (QGraphicsItem *item : scene->items(scenePos))
+        {
+            targetPort = dynamic_cast<QBlueprintPort*>(item);
+            if (targetPort && targetPort != m_draggingPort && targetPort->portType() != m_draggingPort->portType())
+            {
+                break;  // 找到目标端口，退出循环
+            }
+        }
+
+        if (targetPort)
+        {
+            qDebug() << "Found target port:" << targetPort->name();
+            // 连接两个端口
+            m_currentConnection->setEndPort(targetPort);
+        }
+        else
+        {
+            removeConnection(m_currentConnection); // 删除连接
+        }
+
+        m_currentConnection = nullptr;
+        m_draggingPort = nullptr;
+    }
+
+    QGraphicsView::mouseReleaseEvent(event);
+}
+
+void QBlueprint::updateConnectionsForPort(QBlueprintPort *port)
+{
+    // 遍历所有连接并更新与指定端口相关的连接
+    for (QBlueprintConnection *connection : connections)
+    {
+        if (connection->startPort() == port)
+        {
+            connection->updatePosition(port->centerPos(), connection->endPort()->centerPos());
+        }
+        else if (connection->endPort() == port)
+        {
+            connection->updatePosition(connection->startPort()->centerPos(), port->centerPos());
+        }
+    }
+}
+
+// 添加连接到列表中
+void QBlueprint::addConnection(QBlueprintConnection* connection)
+{
+    connections.push_back(connection);
+    scene->addItem(connection); // 将连接添加到场景中
+}
+
+// 从列表中移除连接
+void QBlueprint::removeConnection(QBlueprintConnection* connection)
+{
+    connections.erase(std::remove(connections.begin(), connections.end(), connection), connections.end());
+    scene->removeItem(connection); // 从场景中移除连接
+    delete connection;
+}
+
+// 在 startConnectionDrag 中使用 addConnection
+void QBlueprint::startConnectionDrag(const QPointF &startPos)
+{
+    // 创建临时连线
+    m_currentConnection = new QBlueprintConnection(m_draggingPort, nullptr);
+    addConnection(m_currentConnection); // 将连接添加到管理列表中
+
+    // 设置初始位置
+    m_currentConnection->updatePosition(m_draggingPort->centerPos(), startPos);
+
+    // 强制刷新场景
+    scene->update();
+}
