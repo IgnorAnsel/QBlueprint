@@ -11,6 +11,7 @@
 class QBlueprintNode : public QGraphicsItem
 {
 public:
+
     QBlueprintNode(QGraphicsItem *parent = nullptr);
     ~QBlueprintNode();
     // 重载boundingRect()方法，定义绘制区域
@@ -30,13 +31,21 @@ public:
     const std::vector<QBlueprintPort *>& getOutputPorts() const { return outputPorts; }
 
     void setNodeTitle(QString name);
+    void setClassName(QString class_name);
+    // 获取类名
+    QString getClassName() const { return class_name; }
+    // 获取节点名称
+    QString getNodeTitle() const { return m_name; }
+    QBlueprintNode *clone() const;
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
 private:
+    QString class_name;
     QString m_name;
     std::vector<QBlueprintPort *> inputPorts;   // 存储输入端口
     std::vector<QBlueprintPort *> outputPorts;  // 存储输出端口
+
 };
 
 #endif // QBLUEPRINTNODE_H

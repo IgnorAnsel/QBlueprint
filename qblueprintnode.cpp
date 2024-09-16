@@ -27,6 +27,28 @@ QBlueprintNode::~QBlueprintNode()
         port->removeConnections();
     }
 }
+QBlueprintNode* QBlueprintNode::clone() const
+{
+    // 创建一个新的 QBlueprintNode 实例
+    QBlueprintNode* newNode = new QBlueprintNode();
+    newNode->setNodeTitle(this->m_name);
+    newNode->setClassName(this->class_name);
+
+    // 克隆输入端口
+    for (QBlueprintPort* port : this->inputPorts) {
+        QBlueprintPort* clonedPort = port->clone(); // 假设 QBlueprintPort 有一个 clone 方法
+        newNode->inputPorts.push_back(clonedPort);
+    }
+
+    // 克隆输出端口
+    for (QBlueprintPort* port : this->outputPorts) {
+        QBlueprintPort* clonedPort = port->clone(); // 假设 QBlueprintPort 有一个 clone 方法
+        newNode->outputPorts.push_back(clonedPort);
+    }
+
+    return newNode;
+}
+
 
 QRectF QBlueprintNode::boundingRect() const
 {
@@ -125,6 +147,11 @@ void QBlueprintNode::addOutputPort(const QString &name)
 void QBlueprintNode::setNodeTitle(QString name)
 {
     m_name = name;
+}
+
+void QBlueprintNode::setClassName(QString class_name)
+{
+    QBlueprintNode::class_name = class_name;
 }
 
 QVariant QBlueprintNode::itemChange(GraphicsItemChange change, const QVariant &value)

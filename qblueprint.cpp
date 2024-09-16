@@ -18,27 +18,147 @@ QBlueprint::QBlueprint(QWidget *parent)
     setBackgroundBrush(QColor(30, 30, 30));  // 设置深色背景
 
     // 创建并添加节点到场景中
-    createBlueprintNodes(scene);
+    createBlueprintNodes();
 
 }
-void QBlueprint::createBlueprintNodes(QGraphicsScene* scene)
+
+//void QBlueprint::addBlueprintNode(QString funcname)
+//{
+//    // 分割类名和函数名
+//    QStringList parts = funcname.split("::");
+
+//    QBlueprintNode* node = nullptr;
+
+//    if (parts.size() == 2) {
+//        QString className = parts[0];
+//        QString methodName = parts[1];
+
+//        // 根据类名和函数名调用相应的函数
+//        if (className == "TestClass" && methodName == "add") {
+//            node = QNodeFactory::createNodeFromFunction(&TestClass::add, methodName);
+//        }
+
+//    }
+//    else if (parts.size() == 1) { // 如果只有函数名
+//        QString functionName = parts[0];
+
+//        // 根据函数名调用相应的全局函数
+//        if (functionName == "add") {
+//            node = QNodeFactory::createNodeFromFunction(&add, functionName);
+//        }
+//        // 可以添加更多的全局函数的处理
+//    }
+
+//    // 如果创建了节点，将其添加到场景
+//    if (node) {
+//        node->setPos(50, 50); // 设置节点位置
+//        scene->addItem(node); // 将节点添加到场景
+//    }
+//}
+
+void QBlueprint::createBlueprintNodes()
 {
     // 使用工厂方法基于函数生成节点
-    QBlueprintNode* node = QNodeFactory::createNodeFromFunction(&add, "Addition");
+    QBlueprintNode* testclass_add_node = QNodeFactory::createNodeFromFunction(this, &TestClass::add,"add","TestClass");// 自动获取函数名不正常，直接填写你需要的名称
+    QBlueprintNode* qblueprint_add_node = QNodeFactory::createNodeFromFunction(this, &add,"add");
+    QBlueprintNode* qblueprint_deletea_node = QNodeFactory::createNodeFromFunction(this, &deletea,"deletea");
 
-    // 设置节点位置并添加到场景
-    node->setPos(50, 50);
-    scene->addItem(node);
+    classifyNodes();
 }
-int QBlueprint::add(int a, int b)
+
+void QBlueprint::classifyNodes()
 {
-    return a + b;
+    // 存储分类结果
+    std::unordered_map<QString, std::vector<QString>> classifiedNodes;
+
+    // 遍历 save_nodes，将节点根据类名分类
+    for (QBlueprintNode* node : save_nodes) {
+        QString className = node->getClassName();
+        QString functionName = node->getNodeTitle();
+
+        // 将函数名添加到对应类名的列表中
+        classifiedNodes[className].push_back(functionName);
+    }
+
+    // 输出分类结果，或者进一步处理
+    for (const auto& entry : classifiedNodes) {
+        QString className = entry.first;
+        const std::vector<QString>& functions = entry.second;
+
+        qDebug() << "Class Name:" << className;
+        for (const QString& func : functions) {
+            qDebug() << "  Function:" << func;
+        }
+    }
+}
+
+int QBlueprint::add(int a, int b, int c)
+{
+    return a + b + c;
+}
+int QBlueprint::deletea(int a)
+{
+    return a;
 }
 QBlueprint::~QBlueprint()
 {
 
 }
+void QBlueprint::contextMenuEvent(QContextMenuEvent* event)
+{
+    // 创建右键菜单
+    QMenu contextMenu;
 
+    // 使用一个 map 来临时存储类名和对应的节点列表
+    QMap<QString, QList<QBlueprintNode*>> classNodeMap;
+    for (QBlueprintNode* node : save_nodes) {
+        QString className = node->getClassName();
+        classNodeMap[className].append(node);
+    }
+
+    // 遍历每个类
+    for (auto it = classNodeMap.begin(); it != classNodeMap.end(); ++it) {
+        QString className = it.key();
+        QList<QBlueprintNode*> nodes = it.value();
+
+        // 创建类名的一级菜单
+        QMenu* classMenu = contextMenu.addMenu(className);
+
+        // 添加该类的所有函数到二级菜单中
+        for (QBlueprintNode* node : nodes) {
+            QString functionName = node->getNodeTitle();
+            QAction* action = classMenu->addAction(functionName);
+
+            // 使用 lambda 表达式捕获节点信息
+            connect(action, &QAction::triggered, [this, node]() {
+                placeNodeInScene(node);
+            });
+        }
+    }
+
+    // 显示菜单
+    contextMenu.exec(event->globalPos());
+}
+void QBlueprint::placeNodeInScene(QBlueprintNode* originalNode)
+{
+    // 使用 clone 方法创建节点的副本
+    QBlueprintNode* newNode = originalNode->clone();
+
+    // 设置初始位置（这里可以根据需要动态调整位置）
+    newNode->setPos(50, 50);
+
+    // 将节点添加到场景
+    scene->addItem(newNode);
+
+    // 将节点添加到 scene_nodes 向量中
+    scene_nodes.push_back(newNode);
+}
+
+
+void QBlueprint::pushVectorQBlueprintNode(QBlueprintNode *node)
+{
+    save_nodes.push_back(node);
+}
 
 // 重载绘制背景方法
 void QBlueprint::drawBackground(QPainter *painter, const QRectF &rect)

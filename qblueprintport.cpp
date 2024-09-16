@@ -8,7 +8,13 @@ QBlueprintPort::QBlueprintPort(PortType type, const QString &name, QGraphicsItem
     setFlag(QGraphicsItem::ItemIsSelectable, true);
     setZValue(2);
 }
-
+QBlueprintPort* QBlueprintPort::clone() const
+{
+    // 创建一个新的 QBlueprintPort 实例并复制所需的属性
+    QBlueprintPort* newPort = new QBlueprintPort(this->m_type, this->m_name, nullptr); // 注意这里 parent 设为 nullptr
+    // 复制属性
+    return newPort;
+}
 QRectF QBlueprintPort::boundingRect() const
 {
     //return QRectF(-10, -10, 20, 20);  // 扩大范围以便检测

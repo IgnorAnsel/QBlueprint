@@ -11,6 +11,7 @@ public:
     enum PortType { Input, Output };  // 定义端口类型：输入和输出
 
     QBlueprintPort(PortType type, const QString &name, QGraphicsItem *parent);
+    virtual QBlueprintPort* clone() const;
 
     // 设置端口的矩形区域
     QRectF boundingRect() const override;
