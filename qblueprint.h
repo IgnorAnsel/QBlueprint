@@ -5,6 +5,8 @@
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QWheelEvent>
+#include <QDebug>
+#include <cmath>
 #include "qblueprintnode.h"
 #include "qblueprintconnection.h"
 #include "qnodefactory.h"
