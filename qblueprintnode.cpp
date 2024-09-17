@@ -1,6 +1,6 @@
 #include "qblueprintnode.h"
 
-QBlueprintNode::QBlueprintNode(QGraphicsItem *parent)
+QBlueprintNode::QBlueprintNode(enum Type Type, QGraphicsItem *parent)
     : QGraphicsItem(parent)
 {
     // 启用拖动（节点可以被鼠标拖动）
@@ -14,6 +14,8 @@ QBlueprintNode::QBlueprintNode(QGraphicsItem *parent)
     setFlag(QGraphicsItem::ItemAcceptsInputMethod, true);
 
     setZValue(1);
+    if(nodeType == Type::FUNCTION)
+        qDebug() << "test ok";
 }
 QBlueprintNode::~QBlueprintNode()
 {
@@ -30,7 +32,7 @@ QBlueprintNode::~QBlueprintNode()
 QBlueprintNode* QBlueprintNode::clone() const
 {
     // 创建一个新的 QBlueprintNode 实例
-    QBlueprintNode* newNode = new QBlueprintNode();
+    QBlueprintNode* newNode = new QBlueprintNode(this->nodeType);
     newNode->setNodeTitle(this->m_name);
     newNode->setClassName(this->class_name);
     newNode->setNodeType(this->nodeType);
@@ -157,6 +159,7 @@ void QBlueprintNode::addInputPort(const QString &name)
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, name, this);
     port->setNodeType(nodeType);
+    qDebug() << "input" << nodeType << port->getNodeType();
     inputPorts.push_back(port);
 }
 

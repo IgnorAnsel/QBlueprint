@@ -15,7 +15,7 @@ public:
     template <typename Func>
     static QBlueprintNode* createNodeFromFunction(QBlueprint* blueprint, Func func, const QString& nodeName = QString(), const QString& className = "Other") // 自动获取函数名不正常，直接填写你需要的名称
     {
-        QBlueprintNode* node = new QBlueprintNode();
+        QBlueprintNode* node = new QBlueprintNode(Type::FUNCTION);
         node->setClassName(className);
         // 如果没有提供节点名称，使用函数的类型名称
         if (nodeName.isEmpty()) {

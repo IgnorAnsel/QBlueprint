@@ -13,7 +13,7 @@ class QBlueprintNode : public QGraphicsItem
 {
 public:
 
-    QBlueprintNode(QGraphicsItem *parent = nullptr);
+    QBlueprintNode(enum Type Type, QGraphicsItem *parent = nullptr);
     ~QBlueprintNode();
     // 重载boundingRect()方法，定义绘制区域
     QRectF boundingRect() const override;
@@ -40,6 +40,11 @@ public:
     enum Type getNodeType() { return nodeType; }
     enum Type setNodeType(enum Type type){ nodeType = type; }
     QBlueprintNode *clone() const;
+
+    // 数据类型管理方法
+    void addDataType(DataType type) { dataTypes.push_back(type); }
+    const std::vector<DataType>& getDataTypes() const { return dataTypes; }
+
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
@@ -49,6 +54,7 @@ private:
     QString m_name;
     std::vector<QBlueprintPort *> inputPorts;   // 存储输入端口
     std::vector<QBlueprintPort *> outputPorts;  // 存储输出端口
+    std::vector<DataType> dataTypes;            // 存储节点支持的数据类型
 
 };
 

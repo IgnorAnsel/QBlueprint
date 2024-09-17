@@ -8,6 +8,7 @@ QBlueprintConnection::QBlueprintConnection(QBlueprintPort *startPort, QBlueprint
     // 初始化起点和终点坐标
     m_startPoint = startPort->centerPos();
     m_startColor = getColorFromType(startPort->getNodeType());
+    qDebug() << startPort->getNodeType();
     if (endPort)
     {
         m_endPoint = endPort->centerPos();
@@ -54,7 +55,7 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
 
     if (isSelected)
     {
-        // 使用渐变效果
+        // 使用动态渐变效果
         QLinearGradient gradient(m_startPoint, m_endPoint);
 
         // 动态调整渐变的颜色位置, 使用多个渐变点模拟流动
@@ -71,8 +72,13 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
     }
     else
     {
-        // 使用普通线条
-        pen = QPen(Qt::white, 2);
+        // 使用静态渐变效果
+        QLinearGradient gradient(m_startPoint, m_endPoint);
+        gradient.setColorAt(0, m_startColor);  // 设置起始颜色
+        gradient.setColorAt(1, m_endColor);    // 设置结束颜色
+
+        // 设置连接线的样式，将渐变应用到笔刷
+        pen = QPen(QBrush(gradient), 2);  // 使用渐变作为画笔
     }
 
     painter->setPen(pen);
@@ -87,7 +93,7 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
     // 获取起点和终点的位置差
     qreal dx = m_endPoint.x() - m_startPoint.x();
     qreal dy = m_endPoint.y() - m_startPoint.y();
-    qreal offset = qAbs(dx) * 0.6; // 控制点偏移量
+    qreal offset = qAbs(dx) * 0.6;  // 控制点偏移量
 
     if (m_startPort->portType() == QBlueprintPort::Output)
     {
@@ -124,18 +130,13 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
 }
 
 
-
-
-
-
-
-
 void QBlueprintConnection::setEndPort(QBlueprintPort *endPort)
 {
     m_endPort = endPort;
     if (m_endPort)
     {
         // 如果存在终点端口，更新终点坐标为端口的中心
+        //m_endColor = getColorFromType(endPort->getNodeType());
         updatePosition(m_startPort->centerPos(), m_endPort->centerPos());
     }
 }
@@ -199,10 +200,12 @@ void QBlueprintConnection::clearSelection()
 QColor QBlueprintConnection::getColorFromType(enum Type type)
 {
     if (type == Type::FUNCTION)
-        return(QColor(0, 128, 255));  // 颜色为蓝色
+        return QColor(0, 128, 255);  // 颜色为蓝色
     else if (type == Type::INPUT)
-        return(QColor(0, 255, 0));  // 颜色为绿色
+        return QColor(0, 255, 0);  // 颜色为绿色
     else if (type == Type::OUTPUT)
-        return(QColor(255, 0, 0));  // 颜色为红色
+        return QColor(Qt::red);  // 颜色为红色
+    else
+        qDebug() <<"unkown type:" <<type;
 }
 

@@ -23,8 +23,8 @@ set(PROJECT_SOURCES
         qblueprintconnection.h qblueprintconnection.cpp
         qnodefactory.h qnodefactory.cpp
         testclass.h testclass.cpp
-        qinputnode.h qinputnode.cpp
-        qoutputnode.h qoutputnode.cpp
+#        qinputnode.h qinputnode.cpp
+#        qoutputnode.h qoutputnode.cpp
         alluse.h alluse.cpp
 )
 

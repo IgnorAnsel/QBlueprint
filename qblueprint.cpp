@@ -16,11 +16,6 @@ QBlueprint::QBlueprint(QWidget *parent)
     // 初始视图缩放
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     setBackgroundBrush(QColor(30, 30, 30));  // 设置深色背景
-    // 创建输出节点并添加到场景
-    QInputNode* inputNode = new QInputNode();
-    scene->addItem(inputNode);
-    QOutputNode* outputNode = new QOutputNode();
-    scene->addItem(outputNode);
     // 创建并添加节点到场景中
     createBlueprintNodes();
 
