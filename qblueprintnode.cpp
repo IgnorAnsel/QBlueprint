@@ -33,7 +33,7 @@ QBlueprintNode* QBlueprintNode::clone() const
     QBlueprintNode* newNode = new QBlueprintNode();
     newNode->setNodeTitle(this->m_name);
     newNode->setClassName(this->class_name);
-
+    newNode->setNodeType(this->nodeType);
     // 克隆输入端口
     for (QBlueprintPort* port : this->inputPorts) {
         QBlueprintPort* clonedPort = port->clone(); // 假设 QBlueprintPort 有一个 clone 方法
@@ -97,6 +97,18 @@ void QBlueprintNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->setPen(Qt::black);
     painter->drawRoundedRect(rect, 10, 10);  // 绘制圆角矩形，10像素圆角
 
+    // 绘制内边框
+    QRectF innerRect = rect.adjusted(2, 2, -2, -2);  // 调整rect以绘制一个稍小的矩形，形成内边框效果
+    painter->setBrush(Qt::NoBrush);  // 内边框不填充
+    // 根据 nodeType 设置不同的内边框颜色
+    if (nodeType == Type::FUNCTION)
+        painter->setPen(QPen(QColor(0, 128, 255), 2));  // 设置内边框颜色为蓝色，宽度为2像素
+    else if (nodeType == Type::INPUT)
+        painter->setPen(QPen(QColor(0, 255, 0), 2));  // 设置内边框颜色为绿色，宽度为2像素
+    else if (nodeType == Type::OUTPUT)
+        painter->setPen(QPen(QColor(255, 0, 0), 2));  // 设置内边框颜色为红色，宽度为2像素
+    painter->drawRoundedRect(innerRect, 8, 8);  // 绘制内边框，圆角稍微小一点
+
     // 设置字体大小并绘制标题
     QFont font = painter->font();
     font.setPointSize(10);  // 设置字体大小
@@ -126,27 +138,32 @@ void QBlueprintNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
 }
 
 
+
 void QBlueprintNode::addInputPort()
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "NULL", this);
+    port->setNodeType(nodeType);
     inputPorts.push_back(port);
 }
 
 void QBlueprintNode::addOutputPort()
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "NULL", this);
+    port->setNodeType(nodeType);
     outputPorts.push_back(port);
 }
 
 void QBlueprintNode::addInputPort(const QString &name)
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, name, this);
+    port->setNodeType(nodeType);
     inputPorts.push_back(port);
 }
 
 void QBlueprintNode::addOutputPort(const QString &name)
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, name, this);
+    port->setNodeType(nodeType);
     outputPorts.push_back(port);
 }
 

@@ -3,6 +3,7 @@
 
 #include <QGraphicsItem>
 #include <QPainter>
+#include "alluse.h"
 class QBlueprintConnection;
 class QBlueprint;
 class QBlueprintPort : public QGraphicsItem
@@ -27,12 +28,14 @@ public:
     // 设置和获取端口名称
     QString name() const { return m_name; }
     void setName(const QString &name) { m_name = name; }
-
+    enum Type getNodeType() { return parentnodeType; }
+    enum Type setNodeType(enum Type type){ parentnodeType = type; }
     void updateConnections();
     void removeConnections();
 protected:
     //void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 private:
+    enum Type parentnodeType;
     std::vector<QBlueprintConnection*> connections;  // 存储连接的指针
     PortType m_type;
     QString m_name;  // 端口名称

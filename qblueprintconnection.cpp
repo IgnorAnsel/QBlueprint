@@ -7,10 +7,17 @@ QBlueprintConnection::QBlueprintConnection(QBlueprintPort *startPort, QBlueprint
 {
     // 初始化起点和终点坐标
     m_startPoint = startPort->centerPos();
+    m_startColor = getColorFromType(startPort->getNodeType());
     if (endPort)
+    {
         m_endPoint = endPort->centerPos();
+        m_endColor = getColorFromType(endPort->getNodeType());
+    }
     else
+    {
         m_endPoint = m_startPoint;  // 如果没有终点端口，临时设置终点为起点
+        m_endColor = QColor(Qt::yellow);
+    }
     setZValue(2);
     setFlag(QGraphicsItem::ItemIsSelectable, false);
 
@@ -187,5 +194,15 @@ void QBlueprintConnection::clearSelection()
             connection->update();
         }
     }
+}
+
+QColor QBlueprintConnection::getColorFromType(enum Type type)
+{
+    if (type == Type::FUNCTION)
+        return(QColor(0, 128, 255));  // 颜色为蓝色
+    else if (type == Type::INPUT)
+        return(QColor(0, 255, 0));  // 颜色为绿色
+    else if (type == Type::OUTPUT)
+        return(QColor(255, 0, 0));  // 颜色为红色
 }
 

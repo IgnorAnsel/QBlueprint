@@ -14,7 +14,7 @@ public:
         : QBlueprintNode(parent) {
         setNodeTitle("Output Node");
         addOutputPort("Output");
-
+        setNodeType(Type::OUTPUT);
         // 创建 QLineEdit 作为用户输入的 widget
         inputField = new QLineEdit();
         inputField->setValidator(new QIntValidator(0, 1000));  // 只允许输入整数

@@ -12,7 +12,7 @@ public:
         : QBlueprintNode(parent) {
         setNodeTitle("Input Node");
         addInputPort("Input");
-
+        setNodeType(Type::INPUT);
         // 创建 QLabel 作为输出显示的 widget
         outputLabel = new QLabel("0");
         outputLabel->setFixedSize(80, 20);
@@ -36,7 +36,7 @@ protected:
 
         // 绘制输出字段区域（已经在 QLabel 中绘制）
         painter->setPen(Qt::black);
-        painter->setBrush(Qt::white);
+        painter->setBrush(Qt::black);
     }
 
 private:

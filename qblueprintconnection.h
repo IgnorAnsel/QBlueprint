@@ -31,6 +31,8 @@ protected:
 private:
     QBlueprintPort *m_startPort;  // 起始端口
     QBlueprintPort *m_endPort;    // 终点端口
+    QColor m_startColor;
+    QColor m_endColor;
     QPointF m_startPoint;         // 连线的起点坐标
     QPointF m_endPoint;           // 连线的终点坐标
     bool isSelected = false;      // 标记线条是否被选中
@@ -38,6 +40,7 @@ private:
     qreal animationProgress;  // 动画进度 [0, 1]
     void setupAnimation();  // 设置动画
     void clearSelection();
+    QColor getColorFromType(enum Type type);
 };
 
 #endif // QBLUEPRINTCONNECTION_H

@@ -26,6 +26,7 @@ public:
         } else {
             node->setNodeTitle(nodeName);
         }
+        node->setNodeType(Type::FUNCTION);
         // 解析输入参数类型
         parseInputPorts(node, func);
 

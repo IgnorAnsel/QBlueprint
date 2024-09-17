@@ -25,6 +25,7 @@ set(PROJECT_SOURCES
         testclass.h testclass.cpp
         qinputnode.h qinputnode.cpp
         qoutputnode.h qoutputnode.cpp
+        alluse.h alluse.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -12,6 +12,7 @@ QBlueprintPort* QBlueprintPort::clone() const
 {
     // 创建一个新的 QBlueprintPort 实例并复制所需的属性
     QBlueprintPort* newPort = new QBlueprintPort(this->m_type, this->m_name, nullptr); // 注意这里 parent 设为 nullptr
+    newPort->setNodeType(this->parentnodeType);
     // 复制属性
     return newPort;
 }

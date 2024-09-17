@@ -4,6 +4,7 @@
 #include <QGraphicsItem>
 #include <QPainter>
 #include <vector>
+#include "alluse.h"
 #include "qblueprintport.h"
 #include "qblueprintconnection.h"
 #include <QGraphicsSceneMouseEvent>
@@ -36,11 +37,14 @@ public:
     QString getClassName() const { return class_name; }
     // 获取节点名称
     QString getNodeTitle() const { return m_name; }
+    enum Type getNodeType() { return nodeType; }
+    enum Type setNodeType(enum Type type){ nodeType = type; }
     QBlueprintNode *clone() const;
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
 private:
+    enum Type nodeType;
     QString class_name;
     QString m_name;
     std::vector<QBlueprintPort *> inputPorts;   // 存储输入端口
