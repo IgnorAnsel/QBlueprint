@@ -1,6 +1,6 @@
 #include "qblueprintnode.h"
 
-QBlueprintNode::QBlueprintNode(enum Type Type, QGraphicsItem *parent)
+QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem *parent)
     : QGraphicsItem(parent)
 {
     // 启用拖动（节点可以被鼠标拖动）
@@ -14,8 +14,7 @@ QBlueprintNode::QBlueprintNode(enum Type Type, QGraphicsItem *parent)
     setFlag(QGraphicsItem::ItemAcceptsInputMethod, true);
 
     setZValue(1);
-    if(nodeType == Type::FUNCTION)
-        qDebug() << "test ok";
+    setNodeType(Type);
 }
 QBlueprintNode::~QBlueprintNode()
 {

@@ -13,7 +13,7 @@ class QBlueprintNode : public QGraphicsItem
 {
 public:
 
-    QBlueprintNode(enum Type Type, QGraphicsItem *parent = nullptr);
+    QBlueprintNode(enum Type Type,DataType datatype = DataType::FOR_FUNCTION, QGraphicsItem *parent = nullptr);
     ~QBlueprintNode();
     // 重载boundingRect()方法，定义绘制区域
     QRectF boundingRect() const override;

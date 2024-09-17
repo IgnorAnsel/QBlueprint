@@ -64,6 +64,11 @@ private:
     void updateAllConnections();
     void classifyNodes();
 
+    void createOutputNode(); // 输出节点,又连接输入,显示信息，同时也可再输出
+    void createInputNode(); // 输入节点,用户输入,节点输出用户输入的内容
+
+    void addOutputNode(DataType dataType);
+    void addInputNode(DataType dataType);
 };
 
 #endif // QBLUEPRINT_H

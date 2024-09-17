@@ -24,6 +24,8 @@ QBlueprint::QBlueprint(QWidget *parent)
 void QBlueprint::createBlueprintNodes()
 {
     // 使用工厂方法基于函数生成节点
+    createOutputNode();
+    createInputNode();
     QBlueprintNode* testclass_add_node = QNodeFactory::createNodeFromFunction(this, &TestClass::add,"add","TestClass");// 自动获取函数名不正常，直接填写你需要的名称
     QBlueprintNode* qblueprint_add_node = QNodeFactory::createNodeFromFunction(this, &add,"add");
     QBlueprintNode* qblueprint_deletea_node = QNodeFactory::createNodeFromFunction(this, &deletea,"deletea");
@@ -71,9 +73,24 @@ QBlueprint::~QBlueprint()
 }
 void QBlueprint::contextMenuEvent(QContextMenuEvent* event)
 {
-    // 创建右键菜单
+    // 创建右键菜单（主菜单，一级菜单）
     QMenu contextMenu;
     QPointF scenePos = mapToScene(event->pos());
+
+    // 设置 contextMenu（一级菜单）的样式表，保留圆角
+    contextMenu.setStyleSheet(
+        "QMenu { "
+        "   background-color: #353535; "  // 一级菜单背景色
+        "   color: white; "               // 一级菜单文字颜色
+        "   border: 2px solid #5A5A5A; "  // 一级菜单边框
+        "   border-radius: 8px; "         // 圆角边框
+        "} "
+        "QMenu::item:selected { "
+        "   background-color: #2A82DA; "  // 鼠标悬停时的背景色（一级菜单）
+        "   color: white; "               // 鼠标悬停时的文字颜色
+        "   border-radius: 4px; "          // 圆角边框
+        "}"
+        );
 
     // 使用一个 map 来临时存储类名和对应的节点列表
     QMap<QString, QList<QBlueprintNode*>> classNodeMap;
@@ -87,8 +104,56 @@ void QBlueprint::contextMenuEvent(QContextMenuEvent* event)
         QString className = it.key();
         QList<QBlueprintNode*> nodes = it.value();
 
-        // 创建类名的一级菜单
+        // 创建类名的一级菜单（作为 contextMenu 的子菜单）
         QMenu* classMenu = contextMenu.addMenu(className);
+
+        // 根据类名设置不同的样式表，并保留圆角
+        if (className == "Input") {
+            // 设置 Input 类的样式：绿色（二级菜单），带圆角
+            classMenu->setStyleSheet(
+                "QMenu { "
+                "   background-color: #DFFFD6; "  // 二级菜单的绿色背景
+                "   color: black; "               // 二级菜单的文字颜色
+                "   border: 2px solid green; "     // 二级菜单的绿色边框
+                "   border-radius: 8px; "          // 圆角边框
+                "} "
+                "QMenu::item:selected { "
+                "   background-color: #8CD98C; "  // 鼠标悬停时的绿色背景
+                "   color: black; "               // 鼠标悬停时的文字颜色
+                "   border-radius: 4px; "          // 圆角边框
+                "}"
+                );
+        } else if (className == "Output") {
+            // 设置 Output 类的样式：红色（二级菜单），带圆角
+            classMenu->setStyleSheet(
+                "QMenu { "
+                "   background-color: #FFD6D6; "  // 二级菜单的红色背景
+                "   color: black; "               // 二级菜单的文字颜色
+                "   border: 2px solid red; "       // 二级菜单的红色边框
+                "   border-radius: 8px; "          // 圆角边框
+                "} "
+                "QMenu::item:selected { "
+                "   background-color: #FF7A7A; "  // 鼠标悬停时的红色背景
+                "   color: black; "               // 鼠标悬停时的文字颜色
+                "   border-radius: 4px; "          // 圆角边框
+                "}"
+                );
+        } else {
+            // 设置其他类的样式：蓝色（二级菜单），带圆角
+            classMenu->setStyleSheet(
+                "QMenu { "
+                "   background-color: #D6E6FF; "  // 二级菜单的蓝色背景
+                "   color: black; "               // 二级菜单的文字颜色
+                "   border: 2px solid blue; "      // 二级菜单的蓝色边框
+                "   border-radius: 8px; "          // 圆角边框
+                "} "
+                "QMenu::item:selected { "
+                "   background-color: #7A9EFF; "  // 鼠标悬停时的蓝色背景
+                "   color: black; "               // 鼠标悬停时的文字颜色
+                "   border-radius: 4px; "          // 圆角边框
+                "}"
+                );
+        }
 
         // 添加该类的所有函数到二级菜单中
         for (QBlueprintNode* node : nodes) {
@@ -105,6 +170,8 @@ void QBlueprint::contextMenuEvent(QContextMenuEvent* event)
     // 显示菜单
     contextMenu.exec(event->globalPos());
 }
+
+
 void QBlueprint::placeNodeInScene(QBlueprintNode* originalNode, const QPointF& mousePos)
 {
     // 使用 clone 方法创建节点的副本
@@ -365,4 +432,32 @@ void QBlueprint::startConnectionDrag(const QPointF &startPos)
 
     // 强制刷新场景
     scene->update();
+}
+
+void QBlueprint::createOutputNode()
+{
+    for (int i = 1; i < NUM_DATA_TYPES; ++i) {
+        addOutputNode(static_cast<DataType>(i));
+    }
+}
+
+void QBlueprint::createInputNode()
+{
+    for (int i = 1; i < NUM_DATA_TYPES; ++i) {
+        addInputNode(static_cast<DataType>(i));
+    }
+}
+void QBlueprint::addOutputNode(DataType dataType)
+{
+    QBlueprintNode* node = new QBlueprintNode(Type::OUTPUT,dataType);
+    node->setClassName("Output");
+    node->setNodeTitle(getEnumName(dataType));
+    save_nodes.push_back(node);
+}
+void QBlueprint::addInputNode(DataType dataType)
+{
+    QBlueprintNode* node = new QBlueprintNode(Type::INPUT,dataType);
+    node->setClassName("Input");
+    node->setNodeTitle(getEnumName(dataType));
+    save_nodes.push_back(node);
 }

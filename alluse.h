@@ -1,8 +1,10 @@
 #ifndef ALLUSE_H
 #define ALLUSE_H
-
+#include <QString>
+#define NUM_DATA_TYPES 27
 enum Type{FUNCTION,INPUT,OUTPUT};
 enum DataType {
+    FOR_FUNCTION,          // 为FUNCTION使用
     INT,           // 整型
     FLOAT,         // 单精度浮点型
     DOUBLE,        // 双精度浮点型
@@ -31,7 +33,41 @@ enum DataType {
     QFONT          // QFont 类型 (Qt字体类型)
 };
 
-
+static QString DataTypeNames[] = {
+    "FOR_FUNCTION",
+    "INT",
+    "FLOAT",
+    "DOUBLE",
+    "CHAR",
+    "STRING",
+    "BOOL",
+    "LONG",
+    "SHORT",
+    "UNSIGNED_INT",
+    "VARIANT",
+    "QSTRING",
+    "QDATE",
+    "QDATETIME",
+    "QTIME",
+    "QPOINT",
+    "QPOINTF",
+    "QSIZE",
+    "QSIZEF",
+    "QRECT",
+    "QRECTF",
+    "QCOLOR",
+    "QPIXMAP",
+    "QIMAGE",
+    "QPEN",
+    "QBRUSH",
+    "QFONT"
+};
+static QString getEnumName(DataType dataType) {
+    if (dataType >= 0 && dataType < NUM_DATA_TYPES) {
+        return DataTypeNames[dataType];
+    }
+    return "UNKNOWN";
+}
 class AllUse
 {
 public:
