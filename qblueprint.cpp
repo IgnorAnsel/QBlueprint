@@ -22,40 +22,6 @@ QBlueprint::QBlueprint(QWidget *parent)
 
 }
 
-//void QBlueprint::addBlueprintNode(QString funcname)
-//{
-//    // 分割类名和函数名
-//    QStringList parts = funcname.split("::");
-
-//    QBlueprintNode* node = nullptr;
-
-//    if (parts.size() == 2) {
-//        QString className = parts[0];
-//        QString methodName = parts[1];
-
-//        // 根据类名和函数名调用相应的函数
-//        if (className == "TestClass" && methodName == "add") {
-//            node = QNodeFactory::createNodeFromFunction(&TestClass::add, methodName);
-//        }
-
-//    }
-//    else if (parts.size() == 1) { // 如果只有函数名
-//        QString functionName = parts[0];
-
-//        // 根据函数名调用相应的全局函数
-//        if (functionName == "add") {
-//            node = QNodeFactory::createNodeFromFunction(&add, functionName);
-//        }
-//        // 可以添加更多的全局函数的处理
-//    }
-
-//    // 如果创建了节点，将其添加到场景
-//    if (node) {
-//        node->setPos(50, 50); // 设置节点位置
-//        scene->addItem(node); // 将节点添加到场景
-//    }
-//}
-
 void QBlueprint::createBlueprintNodes()
 {
     // 使用工厂方法基于函数生成节点
@@ -143,7 +109,6 @@ void QBlueprint::placeNodeInScene(QBlueprintNode* originalNode)
 {
     // 使用 clone 方法创建节点的副本
     QBlueprintNode* newNode = originalNode->clone();
-
     // 设置初始位置（这里可以根据需要动态调整位置）
     newNode->setPos(50, 50);
 

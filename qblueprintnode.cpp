@@ -37,17 +37,23 @@ QBlueprintNode* QBlueprintNode::clone() const
     // 克隆输入端口
     for (QBlueprintPort* port : this->inputPorts) {
         QBlueprintPort* clonedPort = port->clone(); // 假设 QBlueprintPort 有一个 clone 方法
+        clonedPort->setParentItem(newNode); // 设置父项为新的 QBlueprintNode
         newNode->inputPorts.push_back(clonedPort);
     }
 
     // 克隆输出端口
     for (QBlueprintPort* port : this->outputPorts) {
         QBlueprintPort* clonedPort = port->clone(); // 假设 QBlueprintPort 有一个 clone 方法
+        clonedPort->setParentItem(newNode); // 设置父项为新的 QBlueprintNode
         newNode->outputPorts.push_back(clonedPort);
     }
 
+    // 设置克隆节点的初始位置
+    newNode->setPos(this->pos());
+
     return newNode;
 }
+
 
 
 QRectF QBlueprintNode::boundingRect() const
