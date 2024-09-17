@@ -16,7 +16,11 @@ QBlueprint::QBlueprint(QWidget *parent)
     // 初始视图缩放
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     setBackgroundBrush(QColor(30, 30, 30));  // 设置深色背景
-
+    // 创建输出节点并添加到场景
+    QInputNode* inputNode = new QInputNode();
+    scene->addItem(inputNode);
+    QOutputNode* outputNode = new QOutputNode();
+    scene->addItem(outputNode);
     // 创建并添加节点到场景中
     createBlueprintNodes();
 
@@ -74,6 +78,7 @@ void QBlueprint::contextMenuEvent(QContextMenuEvent* event)
 {
     // 创建右键菜单
     QMenu contextMenu;
+    QPointF scenePos = mapToScene(event->pos());
 
     // 使用一个 map 来临时存储类名和对应的节点列表
     QMap<QString, QList<QBlueprintNode*>> classNodeMap;
@@ -96,8 +101,8 @@ void QBlueprint::contextMenuEvent(QContextMenuEvent* event)
             QAction* action = classMenu->addAction(functionName);
 
             // 使用 lambda 表达式捕获节点信息
-            connect(action, &QAction::triggered, [this, node]() {
-                placeNodeInScene(node);
+            connect(action, &QAction::triggered, [this, node, scenePos]() {
+                placeNodeInScene(node, scenePos);
             });
         }
     }
@@ -105,12 +110,12 @@ void QBlueprint::contextMenuEvent(QContextMenuEvent* event)
     // 显示菜单
     contextMenu.exec(event->globalPos());
 }
-void QBlueprint::placeNodeInScene(QBlueprintNode* originalNode)
+void QBlueprint::placeNodeInScene(QBlueprintNode* originalNode, const QPointF& mousePos)
 {
     // 使用 clone 方法创建节点的副本
     QBlueprintNode* newNode = originalNode->clone();
-    // 设置初始位置（这里可以根据需要动态调整位置）
-    newNode->setPos(50, 50);
+    // 设置位置
+    newNode->setPos(mousePos);
 
     // 将节点添加到场景
     scene->addItem(newNode);

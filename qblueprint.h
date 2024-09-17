@@ -11,7 +11,8 @@
 #include "qblueprintnode.h"
 #include "qblueprintconnection.h"
 #include "qnodefactory.h"
-
+#include "qoutputnode.h"
+#include "qinputnode.h"
 /****************************************************/
 // 在这里添加你的头文件
 #include "testclass.h"
@@ -35,7 +36,7 @@ public:
     void createBlueprintNodes();
     static int add(int a, int b, int c);
     static int deletea(int a);
-    void placeNodeInScene(QBlueprintNode *originalNode);
+    void placeNodeInScene(QBlueprintNode *originalNode, const QPointF& mousePos);
     void pushVectorQBlueprintNode(QBlueprintNode* node);
 protected:
     void drawBackground(QPainter *painter, const QRectF &rect) override;
