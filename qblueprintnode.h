@@ -4,13 +4,18 @@
 #include <QGraphicsItem>
 #include <QPainter>
 #include <vector>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QObject>
 #include "alluse.h"
 #include "qblueprintport.h"
 #include "qblueprintconnection.h"
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsScene>
-class QBlueprintNode : public QGraphicsItem
+#include <QGraphicsProxyWidget>
+class QBlueprintNode : public QObject, public QGraphicsItem
 {
+    Q_OBJECT
 public:
 
     QBlueprintNode(enum Type Type,DataType datatype = DataType::FOR_FUNCTION, QGraphicsItem *parent = nullptr);
@@ -22,8 +27,8 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
     // 添加输入和输出端口
-    void addInputPort();
-    void addOutputPort();
+    QBlueprintPort* addInputPort();
+    QBlueprintPort* addOutputPort();
     // 添加输入和输出端口（带名称）
     void addInputPort(const QString &name);
     void addOutputPort(const QString &name);
@@ -44,18 +49,52 @@ public:
     // 数据类型管理方法
     void addDataType(DataType type) { dataTypes.push_back(type); }
     const std::vector<DataType>& getDataTypes() const { return dataTypes; }
-
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
 private:
+    void initInputOrOutput(enum Type Type, DataType datatype);
+    void initData(DataType datatype);
+    void cleanData();
+
     enum Type nodeType;
+    DataType dataType;
     QString class_name;
     QString m_name;
     std::vector<QBlueprintPort *> inputPorts;   // 存储输入端口
     std::vector<QBlueprintPort *> outputPorts;  // 存储输出端口
     std::vector<DataType> dataTypes;            // 存储节点支持的数据类型
-
+    //------------------------- 节点数据 --------------------------------//
+    std::vector<int>* intData = nullptr;               // INT
+    std::vector<float>* floatData = nullptr;           // FLOAT
+    std::vector<double>* doubleData = nullptr;         // DOUBLE
+    std::vector<char>* charData = nullptr;             // CHAR
+    std::vector<std::string>* stringData = nullptr;    // STRING
+    std::vector<bool>* boolData = nullptr;             // BOOL
+    std::vector<long>* longData = nullptr;             // LONG
+    std::vector<short>* shortData = nullptr;           // SHORT
+    std::vector<unsigned int>* unsignedIntData = nullptr;  // UNSIGNED_INT
+    std::vector<QVariant>* variantData = nullptr;      // VARIANT
+    std::vector<QString>* qStringData = nullptr;       // QSTRING
+    std::vector<QDate>* qDateData = nullptr;           // QDATE
+    std::vector<QDateTime>* qDateTimeData = nullptr;   // QDATETIME
+    std::vector<QTime>* qTimeData = nullptr;           // QTIME
+    std::vector<QPoint>* qPointData = nullptr;         // QPOINT
+    std::vector<QPointF>* qPointFData = nullptr;       // QPOINTF
+    std::vector<QSize>* qSizeData = nullptr;           // QSIZE
+    std::vector<QSizeF>* qSizeFData = nullptr;         // QSIZEF
+    std::vector<QRect>* qRectData = nullptr;           // QRECT
+    std::vector<QRectF>* qRectFData = nullptr;         // QRECTF
+    std::vector<QColor>* qColorData = nullptr;         // QCOLOR
+    std::vector<QPixmap>* qPixmapData = nullptr;       // QPIXMAP
+    std::vector<QImage>* qImageData = nullptr;         // QIMAGE
+    std::vector<QPen>* qPenData = nullptr;             // QPEN
+    std::vector<QBrush>* qBrushData = nullptr;         // QBRUSH
+    std::vector<QFont>* qFontData = nullptr;           // QFONT
+    //------------------------- 节点输入 --------------------------------//
+    std::vector<QLineEdit*> lineEdits;
+    void addLineEdit(QBlueprintPort* port);
+    void addButtonToTopLeft();
 };
 
 #endif // QBLUEPRINTNODE_H

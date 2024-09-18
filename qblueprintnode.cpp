@@ -1,7 +1,7 @@
 #include "qblueprintnode.h"
 
 QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem *parent)
-    : QGraphicsItem(parent)
+    : QGraphicsItem(parent),dataType(datatype)
 {
     // 启用拖动（节点可以被鼠标拖动）
     setFlag(QGraphicsItem::ItemIsMovable);
@@ -12,7 +12,9 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     setFlag(QGraphicsItem::ItemIsMovable, true);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
     setFlag(QGraphicsItem::ItemAcceptsInputMethod, true);
-
+    //initData(dataType);
+    addButtonToTopLeft();
+    initInputOrOutput(Type,datatype);
     setZValue(1);
     setNodeType(Type);
 }
@@ -27,6 +29,7 @@ QBlueprintNode::~QBlueprintNode()
     {
         port->removeConnections();
     }
+    cleanData();
 }
 QBlueprintNode* QBlueprintNode::clone() const
 {
@@ -43,12 +46,34 @@ QBlueprintNode* QBlueprintNode::clone() const
     }
 
     // 克隆输出端口
-    for (QBlueprintPort* port : this->outputPorts) {
+    for (size_t i = 0; i < this->outputPorts.size(); ++i) {
+        QBlueprintPort* port = this->outputPorts[i];
         QBlueprintPort* clonedPort = port->clone(); // 假设 QBlueprintPort 有一个 clone 方法
         clonedPort->setParentItem(newNode); // 设置父项为新的 QBlueprintNode
         newNode->outputPorts.push_back(clonedPort);
-    }
 
+        // 确保 LineEdit 与 OutputPort 对应
+        if (i < this->lineEdits.size()) {
+            QLineEdit* lineEdit = this->lineEdits[i];
+
+            // 创建新的 QLineEdit 实例，复制现有的文本内容
+            QLineEdit* clonedLineEdit = new QLineEdit(lineEdit->text());
+            clonedLineEdit->setStyleSheet("QLineEdit { border: 1px solid black; border-radius: 0px; padding: 2px; }");
+
+            // 创建新的 QGraphicsProxyWidget 并将克隆的 QLineEdit 嵌入其中
+            QGraphicsProxyWidget* clonedProxy = new QGraphicsProxyWidget(newNode); // 父项是新的 QBlueprintNode
+            clonedProxy->setWidget(clonedLineEdit);  // 将新的 QLineEdit 嵌入到新的代理控件中
+
+            QPointF outputPortPos = port->pos();
+            clonedProxy->setPos(outputPortPos.x() - clonedLineEdit->width() + 210, outputPortPos.y() + 35 + i * 30);
+
+            // 设置克隆的 QLineEdit 大小与原始的一致
+            clonedProxy->resize(QSize(60, 10));
+
+            // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
+            newNode->lineEdits.push_back(clonedLineEdit);
+        }
+    }
     // 设置克隆节点的初始位置
     newNode->setPos(this->pos());
 
@@ -84,9 +109,8 @@ QRectF QBlueprintNode::boundingRect() const
     }
 
     // 确保节点宽度适应输入和输出端口名称的最大宽度
-    int nodeWidth = maxInputWidth + maxOutputWidth + 80; // 80是节点内部的空隙
+    int nodeWidth = maxInputWidth + maxOutputWidth + 100; // 100是节点内部的空隙
     int nodeHeight = std::max(inputPorts.size(), outputPorts.size()) * 35 + 30; // 高度根据端口数量调整
-
     return QRectF(0, 0, nodeWidth, nodeHeight);
 }
 
@@ -137,21 +161,56 @@ void QBlueprintNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
         outputPorts[i]->setPos(boundingRect().width() - 15, i * 30 + 40);  // 输出端口区域向下偏移40
     }
 }
+void QBlueprintNode::addButtonToTopLeft()
+{
+    // 创建 QPushButton
+    QPushButton* button = new QPushButton("+");
+
+    // 创建 QGraphicsProxyWidget 并将按钮嵌入其中
+    QGraphicsProxyWidget* buttonProxy = new QGraphicsProxyWidget(this);
+    // 设置按钮的大小，按钮应该是一个正方形以便显示成圆形
+    int buttonSize = 10;
+    button->setFixedSize(buttonSize, buttonSize);
+    // 使用样式表将按钮绘制成一个圆
+    button->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #4CAF50;"  // 按钮背景颜色（绿色）
+        "    color: white;"  // 按钮文字颜色（白色）
+        "    border: none;"  // 无边框
+        "    border-radius: 0px;"  // 设置圆角半径，半径为按钮尺寸的一半
+        "}"
+        "QPushButton:pressed {"
+        "    background-color: #45a049;"  // 点击时的背景颜色
+        "}"
+        );
+    buttonProxy->setWidget(button);
+    buttonProxy->setPos(10, 10);
+
+    // 设置按钮的点击事件
+    connect(button, &QPushButton::clicked, [this]() {
+        QBlueprintPort* port = addOutputPort();
+        addLineEdit(port);
+        qDebug() << "Button clicked!";
+    });
+}
 
 
 
-void QBlueprintNode::addInputPort()
+
+QBlueprintPort* QBlueprintNode::addInputPort()
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "NULL", this);
     port->setNodeType(nodeType);
     inputPorts.push_back(port);
+    return port;
 }
 
-void QBlueprintNode::addOutputPort()
+QBlueprintPort* QBlueprintNode::addOutputPort()
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "NULL", this);
     port->setNodeType(nodeType);
     outputPorts.push_back(port);
+    return port;
 }
 
 void QBlueprintNode::addInputPort(const QString &name)
@@ -196,3 +255,173 @@ QVariant QBlueprintNode::itemChange(GraphicsItemChange change, const QVariant &v
 
     return QGraphicsItem::itemChange(change, value);
 }
+
+void QBlueprintNode::initInputOrOutput(enum Type Type, DataType datatype)
+{
+    if(Type == Type::INPUT)
+    {
+        switch(datatype){
+        case DataType::INT:
+            addLineEdit(addOutputPort());
+            addLineEdit(addOutputPort());
+            addLineEdit(addOutputPort());
+            break;
+        }
+    }
+    else if(Type == Type::OUTPUT)
+    {
+        switch(datatype){
+        case DataType::INT:
+            break;
+        case FOR_FUNCTION:
+        case FLOAT:
+        case DOUBLE:
+        case CHAR:
+        case STRING:
+        case BOOL:
+        case LONG:
+        case SHORT:
+        case UNSIGNED_INT:
+        case VARIANT:
+        case QSTRING:
+        case QDATE:
+        case QDATETIME:
+        case QTIME:
+        case QPOINT:
+        case QPOINTF:
+        case QSIZE:
+        case QSIZEF:
+        case QRECT:
+        case QRECTF:
+        case QCOLOR:
+        case QPIXMAP:
+        case QIMAGE:
+        case QPEN:
+        case QBRUSH:
+        case QFONT:
+            break;
+        }
+    }
+}
+// enum DataType {
+//     FOR_FUNCTION,          // 为FUNCTION使用
+//     INT,           // 整型
+//     FLOAT,         // 单精度浮点型
+//     DOUBLE,        // 双精度浮点型
+//     CHAR,          // 字符型
+//     STRING,        // 字符串型
+//     BOOL,          // 布尔型
+//     LONG,          // 长整型
+//     SHORT,         // 短整型
+//     UNSIGNED_INT,  // 无符号整型
+//     VARIANT,       // QVariant 类型 (Qt通用类型)
+//     QSTRING,       // QString 类型 (Qt字符串类型)
+//     QDATE,         // QDate 类型 (Qt日期类型)
+//     QDATETIME,     // QDateTime 类型 (Qt日期时间类型)
+//     QTIME,         // QTime 类型 (Qt时间类型)
+//     QPOINT,        // QPoint 类型 (Qt坐标点类型)
+//     QPOINTF,       // QPointF 类型 (Qt浮点坐标点类型)
+//     QSIZE,         // QSize 类型 (Qt尺寸类型)
+//     QSIZEF,        // QSizeF 类型 (Qt浮点尺寸类型)
+//     QRECT,         // QRect 类型 (Qt矩形类型)
+//     QRECTF,        // QRectF 类型 (Qt浮点矩形类型)
+//     QCOLOR,        // QColor 类型 (Qt颜色类型)
+//     QPIXMAP,       // QPixmap 类型 (Qt图像类型)
+//     QIMAGE,        // QImage 类型 (Qt图像类型)
+//     QPEN,          // QPen 类型 (Qt画笔类型)
+//     QBRUSH,        // QBrush 类型 (Qt画刷类型)
+//     QFONT          // QFont 类型 (Qt字体类型)
+// };
+void QBlueprintNode::initData(DataType datatype)
+{
+    switch(datatype){
+    case DataType::INT:
+        intData = new std::vector<int>();
+        break;
+    case DataType::FLOAT:
+        floatData = new std::vector<float>();
+        break;
+    case DataType::DOUBLE:
+        doubleData = new std::vector<double>();
+        break;
+    case DataType::CHAR:
+        charData = new std::vector<char>();
+        break;
+    case DataType::STRING:
+        stringData = new std::vector<std::string>();
+        break;
+    case DataType::BOOL:
+        boolData = new std::vector<bool>();
+        break;
+    case DataType::LONG:
+        longData = new std::vector<long>();
+        break;
+    case DataType::SHORT:
+        shortData = new std::vector<short>();
+        break;
+    case DataType::UNSIGNED_INT:
+        unsignedIntData = new std::vector<unsigned int>();
+        break;
+    case DataType::VARIANT:
+        variantData = new std::vector<QVariant>();
+        break;
+    case DataType::QSTRING:
+        qStringData = new std::vector<QString>();
+        break;
+    case DataType::QDATE:
+        qDateData = new std::vector<QDate>();
+        break;
+    // case :
+    //     = new std::vector<>();
+    //     break;
+    // case :
+    //     = new std::vector<>();
+    //     break;
+    // case :
+    //     = new std::vector<>();
+    //     break;
+    // case :
+    //     = new std::vector<>();
+    //     break;
+    default:
+        qDebug() << "unkown type:" << datatype;
+    }
+}
+
+void QBlueprintNode::cleanData()
+{
+    switch (dataType) {
+    case DataType::INT:
+        delete intData;
+        break;
+    default:
+        break;
+    }
+}
+
+void QBlueprintNode::addLineEdit(QBlueprintPort* port)
+{
+    // 创建 QLineEdit
+    QLineEdit* pLineEdit = new QLineEdit("");
+    pLineEdit->setStyleSheet("QLineEdit { border: 1px solid black; border-radius: 0px; padding: 2px; }");
+
+    // 创建 QGraphicsProxyWidget 并将 QLineEdit 添加到该代理
+    QGraphicsProxyWidget* pMyProxy = new QGraphicsProxyWidget(this); // 代理作为 QGraphicsItem 的子项
+    pMyProxy->setWidget(pLineEdit); // 将 QWidget 基类对象添加到代理中
+
+    // 设置较高的 Z 值，确保控件显示在前景
+    pMyProxy->setZValue(10);
+    lineEdits.push_back(pLineEdit);
+
+
+    QPointF outputPortPos = port->pos();
+    pMyProxy->setPos(outputPortPos.x() - pLineEdit->width() + 210, outputPortPos.y() + 35 + (outputPorts.size()-1) * 30);
+
+    // 设置克隆的 QLineEdit 大小与原始的一致
+    pMyProxy->resize(QSize(60, 10));
+
+    // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
+    lineEdits.push_back(pLineEdit);
+}
+
+

@@ -1,6 +1,23 @@
 #ifndef ALLUSE_H
 #define ALLUSE_H
 #include <QString>
+#include <QVariant>
+#include <QString>
+#include <QDate>
+#include <QDateTime>
+#include <QTime>
+#include <QPoint>
+#include <QPointF>
+#include <QSize>
+#include <QSizeF>
+#include <QRect>
+#include <QRectF>
+#include <QColor>
+#include <QPixmap>
+#include <QImage>
+#include <QPen>
+#include <QBrush>
+#include <QFont>
 #define NUM_DATA_TYPES 27
 enum Type{FUNCTION,INPUT,OUTPUT};
 enum DataType {
