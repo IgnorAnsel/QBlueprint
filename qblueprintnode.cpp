@@ -18,6 +18,8 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     dataType = datatype;
     qDebug() << ":" << dataType;
     setNodeType(Type);
+    if(nodeType == Type::FUNCTION)
+        customNodePortSort();
     addButtonToTopLeft();
 }
 QBlueprintNode::~QBlueprintNode()
@@ -88,7 +90,8 @@ QRectF QBlueprintNode::boundingRect() const
 {
     QFont font;
     QFontMetrics fontMetrics(font);
-    // 获取输入端口中最长的名称宽度
+
+    // 计算输入端口名称的最大宽度
     int maxInputWidth = 0;
     for (const auto& port : inputPorts)
     {
@@ -99,7 +102,7 @@ QRectF QBlueprintNode::boundingRect() const
         }
     }
 
-    // 获取输出端口中最长的名称宽度
+    // 计算输出端口名称的最大宽度
     int maxOutputWidth = 0;
     for (const auto& port : outputPorts)
     {
@@ -110,16 +113,22 @@ QRectF QBlueprintNode::boundingRect() const
         }
     }
 
-    // 确保节点宽度适应输入和输出端口名称的最大宽度
-    int nodeWidth = maxInputWidth + maxOutputWidth + 100; // 100是节点内部的空隙
-    int nodeHeight = std::max(inputPorts.size(), outputPorts.size()) * 35 + 30; // 高度根据端口数量调整
+    // 计算节点宽度，确保能够适应输入、输出端口以及中间的 label
+    int labelWidth = 60; // 假设 QLabel 的宽度为 60，可以根据实际情况调整
+    int padding = 40; // 元素之间的间隔
+    int nodeWidth = maxInputWidth + maxOutputWidth + labelWidth + 2 * padding;
+    int nodeHeight = std::max(inputPorts.size(), outputPorts.size()) * 31 + 31;
+
+    // 如果是 QIMAGE 类型节点，增加宽度和高度
     if (dataType == DataType::QIMAGE)
     {
-        nodeWidth += 100;  // 增加宽度
-        nodeHeight += 100; // 增加高度
+        nodeWidth += 100;
+        nodeHeight += outputPorts.size() * 90;
     }
+
     return QRectF(0, 0, nodeWidth, nodeHeight);
 }
+
 
 void QBlueprintNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
@@ -154,25 +163,16 @@ void QBlueprintNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     // 在标题和端口区域之间绘制一条分割线
     painter->setPen(QPen(Qt::black, 1));  // 设置线条颜色和宽度
     painter->drawLine(rect.left(), titleRect.bottom(), rect.right(), titleRect.bottom());
-
     // 绘制端口区域，端口从下方开始排列
-    for (size_t i = 0; i < inputPorts.size(); ++i)
-    {
-        // 将输入端口放在左侧，调整端口位置
-        inputPorts[i]->setPos(-inputPorts[i]->boundingRect().width() + 15, i * 30 + 40);  // 输入端口区域向下偏移40，避免标题
-    }
-
-    for (size_t i = 0; i < outputPorts.size(); ++i)
-    {
-        // 将输出端口放在右侧，调整端口位置
-        outputPorts[i]->setPos(boundingRect().width() - 15, i * 30 + 40);  // 输出端口区域向下偏移40
-    }
+    if(dataType == DataType::QIMAGE)
+        imageNodePortSort();
+    else
+        customNodePortSort();
 }
 void QBlueprintNode::addButtonToTopLeft()
 {
     // 创建 QPushButton
     QPushButton* button = new QPushButton("+");
-
     // 创建 QGraphicsProxyWidget 并将按钮嵌入其中
     QGraphicsProxyWidget* buttonProxy = new QGraphicsProxyWidget(this);
     // 设置按钮的大小，按钮应该是一个正方形以便显示成圆形
@@ -195,11 +195,45 @@ void QBlueprintNode::addButtonToTopLeft()
 
     // 设置按钮的点击事件
     connect(button, &QPushButton::clicked, [this]() {
-        qDebug() << dataType;
-        if(dataType == DataType::INT)
-            addLineEdit(addOutputPort());
-        else if(dataType == DataType::QIMAGE)
-            addInputLabel(addOutputPort());
+        if(nodeType == Type::INPUT)
+        {
+            switch (dataType) {
+            case DataType::INT:{
+                addLineEdit(addOutputPort());
+                break;
+            }
+            case DataType::QIMAGE:{
+                QBlueprintPort * port = addOutputPort();
+                imageNodePortSort();
+                addInputLabel(port);
+                break;
+            }
+            default:
+                break;
+            }
+
+        }
+        else if(nodeType == Type::OUTPUT){
+            switch (dataType) {
+            case DataType::INT:{
+                QBlueprintPort * outputport = addOutputPort();
+                QBlueprintPort * inputport = addInputPort();
+                customNodePortSort();
+                addOutputLabel(outputport,inputport);
+                break;
+            }
+            case DataType::QIMAGE:{
+                QBlueprintPort * port = addOutputPort();
+                imageNodePortSort();
+                addInputLabel(port);
+                break;
+            }
+            default:
+                break;
+            }
+
+        }
+
         qDebug() << "Button clicked!";
     });
 }
@@ -264,6 +298,74 @@ QVariant QBlueprintNode::itemChange(GraphicsItemChange change, const QVariant &v
     }
 
     return QGraphicsItem::itemChange(change, value);
+}
+
+void QBlueprintNode::customNodePortSort()
+{
+    if(nodeType == Type::FUNCTION)
+    {
+        // 排列输入端口
+        for (size_t i = 0; i < inputPorts.size(); ++i)
+        {
+            // 动态计算输入端口名称宽度
+            QFontMetrics fontMetrics(inputPorts[i]->m_font);
+            int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
+
+            // 根据名称宽度调整输入端口位置
+            inputPorts[i]->setPos(-inputTextWidth + 20, i * 30 + 40);
+        }
+
+        // 排列输出端口
+        for (size_t i = 0; i < outputPorts.size(); ++i)
+        {
+            // 动态计算输出端口名称宽度
+            QFontMetrics fontMetrics(outputPorts[i]->m_font);
+            int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
+
+            // 根据名称宽度调整输出端口位置
+            outputPorts[i]->setPos(boundingRect().width() - outputTextWidth - 5, i * 30 + 40);
+        }
+    }
+    else{
+        // 排列输入端口
+        for (size_t i = 0; i < inputPorts.size(); ++i)
+        {
+            // 动态计算输入端口名称宽度
+            QFontMetrics fontMetrics(inputPorts[i]->m_font);
+            int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
+
+            // 根据名称宽度调整输入端口位置
+            inputPorts[i]->setPos(-inputTextWidth + 40, i * 30 + 40);
+        }
+
+        // 排列输出端口
+        for (size_t i = 0; i < outputPorts.size(); ++i)
+        {
+            // 动态计算输出端口名称宽度
+            QFontMetrics fontMetrics(outputPorts[i]->m_font);
+            int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
+
+            // 根据名称宽度调整输出端口位置
+            outputPorts[i]->setPos(boundingRect().width() - outputTextWidth + 15, i * 30 + 40);
+        }
+    }
+
+}
+
+
+void QBlueprintNode::imageNodePortSort()
+{
+    for (size_t i = 0; i < inputPorts.size(); ++i)
+    {
+        // 将输入端口放在左侧，调整端口位置
+        inputPorts[i]->setPos(-inputPorts[i]->boundingRect().width() + 15, i * 115 + 35);  // 输入端口区域向下偏移40，避免标题
+    }
+
+    for (size_t i = 0; i < outputPorts.size(); ++i)
+    {
+        // 将输出端口放在右侧，调整端口位置
+        outputPorts[i]->setPos(boundingRect().width() - 15, i * 115 + 35);  // 输出端口区域向下偏移40
+    }
 }
 
 void QBlueprintNode::initInputOrOutput(enum Type Type, DataType datatype)
@@ -433,6 +535,7 @@ void QBlueprintNode::addLineEdit(QBlueprintPort* port)
 
 void QBlueprintNode::addInputLabel(QBlueprintPort* port)
 {
+
     // 创建 QWidget 作为 QGraphicsProxyWidget 的容器
     QWidget* containerWidget = new QWidget();
     containerWidget->setFixedSize(150, 110); // 设置容器大小，可以调整为合适的大小
@@ -455,8 +558,8 @@ void QBlueprintNode::addInputLabel(QBlueprintPort* port)
 
     // 设置代理的位置
     QPointF inputPortPos = port->pos();
-    pMyProxy->setPos(inputPortPos.x() + 5, inputPortPos.y() + 35); // 设置代理在场景中的位置
-
+    pMyProxy->setPos(inputPortPos.x() - 200, inputPortPos.y()); // 设置代理在场景中的位置
+    inputlabel.push_back(pLabel);
     // 设置代理大小
     pMyProxy->resize(containerWidget->size());
 
@@ -472,6 +575,43 @@ void QBlueprintNode::addInputLabel(QBlueprintPort* port)
     // 确保场景更新
     scene()->update();
 }
+
+void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inport)
+{
+    // 创建 QLabel
+    QLabel* pLabel = new QLabel("");
+    pLabel->setStyleSheet("QLabel { border: 1px solid black; border-radius: 0px; padding: 2px; }");
+
+    // 创建 QGraphicsProxyWidget 容器
+    QGraphicsProxyWidget* pMyProxy = new QGraphicsProxyWidget(this);
+    pMyProxy->setWidget(pLabel);
+
+    // 动态计算宽度：根据输入端口名称、输出端口名称以及 label 的宽度来计算
+    QFontMetrics fontMetrics(pLabel->font());
+    int inputPortTextWidth = fontMetrics.horizontalAdvance(inport->name()); // 输入端口名称宽度
+    int outputPortTextWidth = fontMetrics.horizontalAdvance(outport->name()); // 输出端口名称宽度
+
+    // 设置 label 的位置，label 在输入端口和输出端口之间
+    int labelPadding = 20; // 元素之间的间隔
+    int totalWidth = inputPortTextWidth + outputPortTextWidth + pLabel->width() + (2 * labelPadding);
+
+    // 获取端口位置
+    QPointF inputPortPos = inport->pos();
+    QPointF outputPortPos = outport->pos();
+
+    // 将 label 放在合适位置，居中显示
+    pMyProxy->setPos(inputPortPos.x() + inputPortTextWidth + labelPadding, inputPortPos.y());
+
+    // 设置 label 的大小
+    pMyProxy->resize(pLabel->sizeHint());
+
+    // 保存 label 到列表
+    outputlabel.push_back(pLabel);
+
+    // 重新计算节点边界
+    scene()->update();
+}
+
 
 
 

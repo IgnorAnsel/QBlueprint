@@ -2,7 +2,7 @@
 #include "qblueprintconnection.h"
 #include "qblueprint.h"
 QBlueprintPort::QBlueprintPort(PortType type, const QString &name, QGraphicsItem *parent)
-    : QGraphicsItem(parent), m_type(type), m_name(name)
+    : QGraphicsItem(parent), m_type(type), m_name(name),m_font(QFont("Arial", 10))
 {
     setFlag(QGraphicsItem::ItemIsMovable, false);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -29,13 +29,11 @@ void QBlueprintPort::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->setBrush((m_type == Input) ? Qt::blue : Qt::green);  // 输入端口为蓝色，输出端口为绿色
     painter->drawEllipse(boundingRect());  // 绘制圆形端口
 
-    // 设置字体大小
-    QFont font = painter->font();
-    font.setPointSize(10);  // 调整字体大小
-    painter->setFont(font);
+
+    painter->setFont(m_font);  // 使用成员变量中的字体
 
     // 获取字体的度量信息，用来计算文本宽度
-    QFontMetrics fontMetrics(font);
+    QFontMetrics fontMetrics(m_font);
 
     // 动态计算端口名称的宽度
     int textWidth = fontMetrics.horizontalAdvance(m_name);

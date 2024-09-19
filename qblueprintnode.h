@@ -56,6 +56,8 @@ public:
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 private:
+    void customNodePortSort();
+    void imageNodePortSort();
     void initInputOrOutput(enum Type Type, DataType datatype);
     void initData(DataType datatype);
     void cleanData();
@@ -101,6 +103,7 @@ private:
 
     void addLineEdit(QBlueprintPort* port);
     void addInputLabel(QBlueprintPort* port);
+    void addOutputLabel(QBlueprintPort* outport, QBlueprintPort* inport);
     void addButtonToTopLeft();
 };
 
