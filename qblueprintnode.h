@@ -4,8 +4,12 @@
 #include <QGraphicsItem>
 #include <QPainter>
 #include <vector>
+
 #include <QLineEdit>
+#include <QLabel>
 #include <QPushButton>
+#include <QVBoxLayout>
+#include <QFileDialog>
 #include <QObject>
 #include "alluse.h"
 #include "qblueprintport.h"
@@ -51,7 +55,6 @@ public:
     const std::vector<DataType>& getDataTypes() const { return dataTypes; }
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
-
 private:
     void initInputOrOutput(enum Type Type, DataType datatype);
     void initData(DataType datatype);
@@ -93,7 +96,11 @@ private:
     std::vector<QFont>* qFontData = nullptr;           // QFONT
     //------------------------- 节点输入 --------------------------------//
     std::vector<QLineEdit*> lineEdits;
+    std::vector<QLabel*> inputlabel;
+    std::vector<QLabel*> outputlabel;
+
     void addLineEdit(QBlueprintPort* port);
+    void addInputLabel(QBlueprintPort* port);
     void addButtonToTopLeft();
 };
 

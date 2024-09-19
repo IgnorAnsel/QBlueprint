@@ -13,10 +13,12 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
     setFlag(QGraphicsItem::ItemAcceptsInputMethod, true);
     //initData(dataType);
-    addButtonToTopLeft();
     initInputOrOutput(Type,datatype);
     setZValue(1);
+    dataType = datatype;
+    qDebug() << ":" << dataType;
     setNodeType(Type);
+    addButtonToTopLeft();
 }
 QBlueprintNode::~QBlueprintNode()
 {
@@ -34,7 +36,7 @@ QBlueprintNode::~QBlueprintNode()
 QBlueprintNode* QBlueprintNode::clone() const
 {
     // 创建一个新的 QBlueprintNode 实例
-    QBlueprintNode* newNode = new QBlueprintNode(this->nodeType);
+    QBlueprintNode* newNode = new QBlueprintNode(this->nodeType,this->dataType);
     newNode->setNodeTitle(this->m_name);
     newNode->setClassName(this->class_name);
     newNode->setNodeType(this->nodeType);
@@ -111,6 +113,11 @@ QRectF QBlueprintNode::boundingRect() const
     // 确保节点宽度适应输入和输出端口名称的最大宽度
     int nodeWidth = maxInputWidth + maxOutputWidth + 100; // 100是节点内部的空隙
     int nodeHeight = std::max(inputPorts.size(), outputPorts.size()) * 35 + 30; // 高度根据端口数量调整
+    if (dataType == DataType::QIMAGE)
+    {
+        nodeWidth += 100;  // 增加宽度
+        nodeHeight += 100; // 增加高度
+    }
     return QRectF(0, 0, nodeWidth, nodeHeight);
 }
 
@@ -188,8 +195,11 @@ void QBlueprintNode::addButtonToTopLeft()
 
     // 设置按钮的点击事件
     connect(button, &QPushButton::clicked, [this]() {
-        QBlueprintPort* port = addOutputPort();
-        addLineEdit(port);
+        qDebug() << dataType;
+        if(dataType == DataType::INT)
+            addLineEdit(addOutputPort());
+        else if(dataType == DataType::QIMAGE)
+            addInputLabel(addOutputPort());
         qDebug() << "Button clicked!";
     });
 }
@@ -262,9 +272,6 @@ void QBlueprintNode::initInputOrOutput(enum Type Type, DataType datatype)
     {
         switch(datatype){
         case DataType::INT:
-            addLineEdit(addOutputPort());
-            addLineEdit(addOutputPort());
-            addLineEdit(addOutputPort());
             break;
         }
     }
@@ -423,5 +430,48 @@ void QBlueprintNode::addLineEdit(QBlueprintPort* port)
     // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
     lineEdits.push_back(pLineEdit);
 }
+
+void QBlueprintNode::addInputLabel(QBlueprintPort* port)
+{
+    // 创建 QWidget 作为 QGraphicsProxyWidget 的容器
+    QWidget* containerWidget = new QWidget();
+    containerWidget->setFixedSize(150, 110); // 设置容器大小，可以调整为合适的大小
+
+    // 创建 QLabel 用于显示图片
+    QLabel* pLabel = new QLabel(containerWidget); // 直接设置父对象为 containerWidget
+    pLabel->setFixedSize(150, 90); // 设置 QLabel 大小
+    pLabel->setStyleSheet("QLabel { border: 1px solid black; }");
+    pLabel->setAlignment(Qt::AlignCenter); // 居中显示图片
+    pLabel->move(0, 0); // 设置 QLabel 在容器中的位置
+
+    // 创建 QPushButton 用于打开文件选择对话框
+    QPushButton* pButton = new QPushButton("选择图片", containerWidget); // 直接设置父对象为 containerWidget
+    pButton->setFixedSize(150, 20); // 设置按钮大小
+    pButton->move(0, 90); // 设置 QPushButton 在容器中的位置
+
+    // 创建 QGraphicsProxyWidget 并将 containerWidget 添加到代理
+    QGraphicsProxyWidget* pMyProxy = new QGraphicsProxyWidget(this);
+    pMyProxy->setWidget(containerWidget);
+
+    // 设置代理的位置
+    QPointF inputPortPos = port->pos();
+    pMyProxy->setPos(inputPortPos.x() + 5, inputPortPos.y() + 35); // 设置代理在场景中的位置
+
+    // 设置代理大小
+    pMyProxy->resize(containerWidget->size());
+
+    // 连接按钮点击事件，打开文件选择对话框
+    connect(pButton, &QPushButton::clicked, [=]() {
+        QString filePath = QFileDialog::getOpenFileName(nullptr, "选择图片", "", "Images (*.png *.jpg *.bmp)");
+        if (!filePath.isEmpty()) {
+            QPixmap pixmap(filePath);
+            pLabel->setPixmap(pixmap.scaled(pLabel->size(), Qt::KeepAspectRatio)); // 在 QLabel 中显示选中的图片
+        }
+    });
+
+    // 确保场景更新
+    scene()->update();
+}
+
 
 
