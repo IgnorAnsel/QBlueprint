@@ -4,7 +4,7 @@
 #include <QGraphicsItem>
 #include <QPainter>
 #include <vector>
-
+#include <algorithm>
 #include <QLineEdit>
 #include <QLabel>
 #include <QPushButton>
@@ -53,6 +53,7 @@ public:
     // 数据类型管理方法
     void addDataType(DataType type) { dataTypes.push_back(type); }
     const std::vector<DataType>& getDataTypes() const { return dataTypes; }
+    void updateLabelWithData(QBlueprintPort *port, const QString &data);
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 private:
@@ -61,7 +62,7 @@ private:
     void initInputOrOutput(enum Type Type, DataType datatype);
     void initData(DataType datatype);
     void cleanData();
-
+    QFont font;
     enum Type nodeType;
     DataType dataType;
     QString class_name;
@@ -106,6 +107,7 @@ private:
     void addOutputLabel(QBlueprintPort* outport, QBlueprintPort* inport);
     void addButtonToTopLeft();
     void adjustLineEditWidth(const QString &text);
+    void adjustLabelWidth(const QString &text);
 };
 
 #endif // QBLUEPRINTNODE_H

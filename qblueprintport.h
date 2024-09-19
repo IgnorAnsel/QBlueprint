@@ -35,6 +35,8 @@ public:
     enum Type setNodeType(enum Type type){ parentnodeType = type; }
     void updateConnections();
     void removeConnections();
+    void sendDataToConnectedPorts(const QString &data);
+    void receiveData(const QString &data);
 protected:
     //void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 private:

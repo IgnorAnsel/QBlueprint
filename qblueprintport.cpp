@@ -104,3 +104,39 @@ void QBlueprintPort::removeConnections()
         }
     }
 }
+
+void QBlueprintPort::sendDataToConnectedPorts(const QString& data)
+{
+    // 检查当前场景是否存在
+    QGraphicsScene *currentScene = this->scene();
+    if (!currentScene) return;  // 如果场景不存在，直接返回
+    currentScene->update();
+    QBlueprint *blueprintView = dynamic_cast<QBlueprint*>(currentScene->views().first());
+
+    if (blueprintView)
+    {
+        // 遍历所有连接，找到与当前端口相连的 input 端口
+        for (QBlueprintConnection *connection : blueprintView->connections)
+        {
+            if (connection->startPort() == this && connection->endPort()->portType() == QBlueprintPort::Input)
+            {
+                QBlueprintPort* inputPort = connection->endPort();
+                qDebug() << "yes";
+                inputPort->receiveData(data);  // 传递数据到 input 端口
+            }
+        }
+    }
+}
+
+void QBlueprintPort::receiveData(const QString& data)
+{
+    // 找到对应的 QLabel 并更新显示内容
+    if (parentItem())
+    {
+        QBlueprintNode* parentNode = dynamic_cast<QBlueprintNode*>(parentItem());
+        if (parentNode)
+        {
+            parentNode->updateLabelWithData(this, data);
+        }
+    }
+}
