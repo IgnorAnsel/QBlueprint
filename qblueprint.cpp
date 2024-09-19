@@ -27,6 +27,7 @@ void QBlueprint::createBlueprintNodes()
     createOutputNode();
     createInputNode();
     QBlueprintNode* testclass_add_node = QNodeFactory::createNodeFromFunction(this, &TestClass::add,"add","TestClass");// 自动获取函数名不正常，直接填写你需要的名称
+    QBlueprintNode* testclass_test_node = QNodeFactory::createNodeFromFunction(this, &TestClass::test,"test", "TestClass");
     QBlueprintNode* qblueprint_add_node = QNodeFactory::createNodeFromFunction(this, &add,"add");
     QBlueprintNode* qblueprint_deletea_node = QNodeFactory::createNodeFromFunction(this, &deletea,"deletea");
 

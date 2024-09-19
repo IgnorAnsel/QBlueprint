@@ -2,7 +2,7 @@
 #include "qblueprintconnection.h"
 #include "qblueprint.h"
 QBlueprintPort::QBlueprintPort(PortType type, const QString &name, QGraphicsItem *parent)
-    : QGraphicsItem(parent), m_type(type), m_name(name)
+    : QGraphicsItem(parent), m_type(type), m_name(name),m_font(QFont("Arial", 10))
 {
     setFlag(QGraphicsItem::ItemIsMovable, false);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -29,13 +29,11 @@ void QBlueprintPort::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->setBrush((m_type == Input) ? Qt::blue : Qt::green);  // 输入端口为蓝色，输出端口为绿色
     painter->drawEllipse(boundingRect());  // 绘制圆形端口
 
-    // 设置字体大小
-    QFont font = painter->font();
-    font.setPointSize(10);  // 调整字体大小
-    painter->setFont(font);
+
+    painter->setFont(m_font);  // 使用成员变量中的字体
 
     // 获取字体的度量信息，用来计算文本宽度
-    QFontMetrics fontMetrics(font);
+    QFontMetrics fontMetrics(m_font);
 
     // 动态计算端口名称的宽度
     int textWidth = fontMetrics.horizontalAdvance(m_name);
@@ -103,6 +101,42 @@ void QBlueprintPort::removeConnections()
         for (QBlueprintConnection *connection : toRemove)
         {
             blueprintView->removeConnection(connection);
+        }
+    }
+}
+
+void QBlueprintPort::sendDataToConnectedPorts(const QString& data)
+{
+    // 检查当前场景是否存在
+    QGraphicsScene *currentScene = this->scene();
+    if (!currentScene) return;  // 如果场景不存在，直接返回
+    currentScene->update();
+    QBlueprint *blueprintView = dynamic_cast<QBlueprint*>(currentScene->views().first());
+
+    if (blueprintView)
+    {
+        // 遍历所有连接，找到与当前端口相连的 input 端口
+        for (QBlueprintConnection *connection : blueprintView->connections)
+        {
+            if (connection->startPort() == this && connection->endPort()->portType() == QBlueprintPort::Input)
+            {
+                QBlueprintPort* inputPort = connection->endPort();
+                qDebug() << "yes";
+                inputPort->receiveData(data);  // 传递数据到 input 端口
+            }
+        }
+    }
+}
+
+void QBlueprintPort::receiveData(const QString& data)
+{
+    // 找到对应的 QLabel 并更新显示内容
+    if (parentItem())
+    {
+        QBlueprintNode* parentNode = dynamic_cast<QBlueprintNode*>(parentItem());
+        if (parentNode)
+        {
+            parentNode->updateLabelWithData(this, data);
         }
     }
 }

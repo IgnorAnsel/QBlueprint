@@ -10,7 +10,10 @@ class QBlueprintPort : public QGraphicsItem
 {
 public:
     enum PortType { Input, Output };  // 定义端口类型：输入和输出
-
+    QFont m_font;
+    void setPortFont(const QFont &font) {
+        m_font = font;
+    }
     QBlueprintPort(PortType type, const QString &name, QGraphicsItem *parent);
     virtual QBlueprintPort* clone() const;
 
@@ -32,6 +35,8 @@ public:
     enum Type setNodeType(enum Type type){ parentnodeType = type; }
     void updateConnections();
     void removeConnections();
+    void sendDataToConnectedPorts(const QString &data);
+    void receiveData(const QString &data);
 protected:
     //void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 private:
