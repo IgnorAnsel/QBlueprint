@@ -20,7 +20,8 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     setNodeType(Type);
     if(nodeType == Type::FUNCTION)
         customNodePortSort();
-    addButtonToTopLeft();
+    else
+        addButtonToTopLeft();
 }
 QBlueprintNode::~QBlueprintNode()
 {
@@ -117,15 +118,19 @@ QRectF QBlueprintNode::boundingRect() const
     int nodeWidth = maxInputWidth + maxOutputWidth + padding;
     int nodeHeight = std::max(inputPorts.size(), outputPorts.size()) * 31 + 31;
 
-    // 如果是 QIMAGE 类型节点，增加宽度和高度
     if (nodeType == Type::INPUT)
     {
-        if (dataType == DataType::QIMAGE)
-        {
-            nodeWidth += 110;
-            nodeHeight += outputPorts.size() * 90;
-        }
-        if (dataType == DataType::INT)
+        switch (dataType) {
+        case DataType::INT:
+        case DataType::FLOAT:
+        case DataType::DOUBLE:
+        case DataType::CHAR:
+        case DataType::STRING:
+        case DataType::BOOL:
+        case DataType::LONG:
+        case DataType::SHORT:
+        case DataType::UNSIGNED_INT:
+        case DataType::QSTRING:
         {
             int maxLineEditWidth = 0;
             for(const auto& lineEdit : lineEdits)
@@ -135,12 +140,28 @@ QRectF QBlueprintNode::boundingRect() const
             }
             nodeWidth += maxLineEditWidth;
         }
+            break;
+        case DataType::QIMAGE:
+            nodeWidth += 110;
+            nodeHeight += outputPorts.size() * 90;
+            break;
+        default:
+            break;
+        }
     }
     else if(nodeType == Type::OUTPUT)
     {
         switch (dataType) {
         case DataType::INT:
         case DataType::FLOAT:
+        case DataType::DOUBLE:
+        case DataType::CHAR:
+        case DataType::STRING:
+        case DataType::BOOL:
+        case DataType::LONG:
+        case DataType::SHORT:
+        case DataType::UNSIGNED_INT:
+        case DataType::QSTRING:
         {
             int maxLabelWidth = 0;
             for(const auto& label : outputlabel)
@@ -228,7 +249,16 @@ void QBlueprintNode::addButtonToTopLeft()
         if(nodeType == Type::INPUT)
         {
             switch (dataType) {
-            case DataType::INT:{
+            case DataType::INT:
+            case DataType::FLOAT:
+            case DataType::DOUBLE:
+            case DataType::CHAR:
+            case DataType::STRING:
+            case DataType::BOOL:
+            case DataType::LONG:
+            case DataType::SHORT:
+            case DataType::UNSIGNED_INT:
+            case DataType::QSTRING:{
                 addLineEdit(addOutputPort(getEnumName(dataType)));
                 break;
             }
@@ -245,14 +275,17 @@ void QBlueprintNode::addButtonToTopLeft()
         }
         else if(nodeType == Type::OUTPUT){
             switch (dataType) {
-            case DataType::INT:{
-                QBlueprintPort * outputport = addOutputPort(getEnumName(dataType));
-                QBlueprintPort * inputport = addInputPort(getEnumName(dataType));
-                customNodePortSort();
-                addOutputLabel(outputport,inputPorts[inputPorts.size()-1]);
-                break;
-            }
-            case DataType::FLOAT:{
+            case DataType::INT:
+            case DataType::FLOAT:
+            case DataType::DOUBLE:
+            case DataType::CHAR:
+            case DataType::STRING:
+            case DataType::BOOL:
+            case DataType::LONG:
+            case DataType::SHORT:
+            case DataType::UNSIGNED_INT:
+            case DataType::QSTRING:
+            {
                 QBlueprintPort * outputport = addOutputPort(getEnumName(dataType));
                 QBlueprintPort * inputport = addInputPort(getEnumName(dataType));
                 customNodePortSort();
@@ -621,15 +654,13 @@ void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inp
     QPointF outputPortPos = inport->pos();
     QFontMetrics fontMetrics(inport->m_font);
     int outputTextWidth = fontMetrics.horizontalAdvance(inport->name());
-    pMyProxy->setPos(outputPortPos.x() - pLabel->width() + outputTextWidth, outputPortPos.y() - 3);
+    pMyProxy->setPos(outputPortPos.x() + outputTextWidth + 30, outputPortPos.y() - 3);
 
     // 设置克隆的 QLineEdit 大小与原始的一致
     pMyProxy->resize(QSize(100, 20));
 
     // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
     outputlabel.push_back(pLabel);
-
-
 }
 
 void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& data)
