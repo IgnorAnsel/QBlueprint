@@ -113,17 +113,25 @@ QRectF QBlueprintNode::boundingRect() const
         }
     }
 
-    // 计算节点宽度，确保能够适应输入、输出端口以及中间的 label
-    int labelWidth = 60; // 假设 QLabel 的宽度为 60，可以根据实际情况调整
-    int padding = 40; // 元素之间的间隔
-    int nodeWidth = maxInputWidth + maxOutputWidth + labelWidth + 2 * padding;
+    int padding = 80;
+    int nodeWidth = maxInputWidth + maxOutputWidth + padding;
     int nodeHeight = std::max(inputPorts.size(), outputPorts.size()) * 31 + 31;
 
     // 如果是 QIMAGE 类型节点，增加宽度和高度
     if (dataType == DataType::QIMAGE)
     {
-        nodeWidth += 100;
+        nodeWidth += 110;
         nodeHeight += outputPorts.size() * 90;
+    }
+    if (dataType == DataType::INT)
+    {
+        int maxLineEditWidth = 0;
+        for(const auto& lineEdit : lineEdits)
+        {
+            if(maxLineEditWidth < lineEdit->width())
+                maxLineEditWidth = lineEdit->width();
+        }
+        nodeWidth += maxLineEditWidth;
     }
 
     return QRectF(0, 0, nodeWidth, nodeHeight);
@@ -199,13 +207,13 @@ void QBlueprintNode::addButtonToTopLeft()
         {
             switch (dataType) {
             case DataType::INT:{
-                addLineEdit(addOutputPort());
+                addLineEdit(addOutputPort(getEnumName(dataType)));
                 break;
             }
             case DataType::QIMAGE:{
-                QBlueprintPort * port = addOutputPort();
+                QBlueprintPort * port = addOutputPort(getEnumName(dataType));
                 imageNodePortSort();
-                addInputLabel(port);
+                addInputLabel(outputPorts[outputPorts.size()-1]);
                 break;
             }
             default:
@@ -216,14 +224,14 @@ void QBlueprintNode::addButtonToTopLeft()
         else if(nodeType == Type::OUTPUT){
             switch (dataType) {
             case DataType::INT:{
-                QBlueprintPort * outputport = addOutputPort();
-                QBlueprintPort * inputport = addInputPort();
+                QBlueprintPort * outputport = addOutputPort(getEnumName(dataType));
+                QBlueprintPort * inputport = addInputPort(getEnumName(dataType));
                 customNodePortSort();
                 addOutputLabel(outputport,inputport);
                 break;
             }
             case DataType::QIMAGE:{
-                QBlueprintPort * port = addOutputPort();
+                QBlueprintPort * port = addOutputPort(getEnumName(dataType));
                 imageNodePortSort();
                 addInputLabel(port);
                 break;
@@ -257,7 +265,7 @@ QBlueprintPort* QBlueprintNode::addOutputPort()
     return port;
 }
 
-void QBlueprintNode::addInputPort(const QString &name)
+QBlueprintPort* QBlueprintNode::addInputPort(const QString &name)
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, name, this);
     port->setNodeType(nodeType);
@@ -265,7 +273,7 @@ void QBlueprintNode::addInputPort(const QString &name)
     inputPorts.push_back(port);
 }
 
-void QBlueprintNode::addOutputPort(const QString &name)
+QBlueprintPort* QBlueprintNode::addOutputPort(const QString &name)
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, name, this);
     port->setNodeType(nodeType);
@@ -300,73 +308,36 @@ QVariant QBlueprintNode::itemChange(GraphicsItemChange change, const QVariant &v
     return QGraphicsItem::itemChange(change, value);
 }
 
-void QBlueprintNode::customNodePortSort()
-{
-    if(nodeType == Type::FUNCTION)
-    {
-        // 排列输入端口
-        for (size_t i = 0; i < inputPorts.size(); ++i)
-        {
-            // 动态计算输入端口名称宽度
-            QFontMetrics fontMetrics(inputPorts[i]->m_font);
-            int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
-
-            // 根据名称宽度调整输入端口位置
-            inputPorts[i]->setPos(-inputTextWidth + 20, i * 30 + 40);
-        }
-
-        // 排列输出端口
-        for (size_t i = 0; i < outputPorts.size(); ++i)
-        {
-            // 动态计算输出端口名称宽度
-            QFontMetrics fontMetrics(outputPorts[i]->m_font);
-            int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
-
-            // 根据名称宽度调整输出端口位置
-            outputPorts[i]->setPos(boundingRect().width() - outputTextWidth - 5, i * 30 + 40);
-        }
-    }
-    else{
-        // 排列输入端口
-        for (size_t i = 0; i < inputPorts.size(); ++i)
-        {
-            // 动态计算输入端口名称宽度
-            QFontMetrics fontMetrics(inputPorts[i]->m_font);
-            int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
-
-            // 根据名称宽度调整输入端口位置
-            inputPorts[i]->setPos(-inputTextWidth + 40, i * 30 + 40);
-        }
-
-        // 排列输出端口
-        for (size_t i = 0; i < outputPorts.size(); ++i)
-        {
-            // 动态计算输出端口名称宽度
-            QFontMetrics fontMetrics(outputPorts[i]->m_font);
-            int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
-
-            // 根据名称宽度调整输出端口位置
-            outputPorts[i]->setPos(boundingRect().width() - outputTextWidth + 15, i * 30 + 40);
-        }
+void QBlueprintNode::customNodePortSort() {
+    // 排列输入端口
+    for (size_t i = 0; i < inputPorts.size(); ++i) {
+        QFontMetrics fontMetrics(inputPorts[i]->m_font);
+        int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
+        inputPorts[i]->setPos(5, i * 30 + 40); // 左边距15，纵向位置
     }
 
-}
-
-
-void QBlueprintNode::imageNodePortSort()
-{
-    for (size_t i = 0; i < inputPorts.size(); ++i)
-    {
-        // 将输入端口放在左侧，调整端口位置
-        inputPorts[i]->setPos(-inputPorts[i]->boundingRect().width() + 15, i * 115 + 35);  // 输入端口区域向下偏移40，避免标题
-    }
-
-    for (size_t i = 0; i < outputPorts.size(); ++i)
-    {
-        // 将输出端口放在右侧，调整端口位置
-        outputPorts[i]->setPos(boundingRect().width() - 15, i * 115 + 35);  // 输出端口区域向下偏移40
+    // 排列输出端口
+    for (size_t i = 0; i < outputPorts.size(); ++i) {
+        QFontMetrics fontMetrics(outputPorts[i]->m_font);
+        int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
+        outputPorts[i]->setPos(boundingRect().width() - 15, i * 30 + 40); // 右边距15
     }
 }
+
+
+
+void QBlueprintNode::imageNodePortSort() {
+    for (size_t i = 0; i < inputPorts.size(); ++i) {
+        // 将输入端口放在左侧
+        inputPorts[i]->setPos(5, i * 115 + 35);  // 左边距
+    }
+
+    for (size_t i = 0; i < outputPorts.size(); ++i) {
+        // 将输出端口放在右侧
+        outputPorts[i]->setPos(boundingRect().width() - 15, i * 115 + 35); // 右边距
+    }
+}
+
 
 void QBlueprintNode::initInputOrOutput(enum Type Type, DataType datatype)
 {
@@ -522,6 +493,7 @@ void QBlueprintNode::addLineEdit(QBlueprintPort* port)
     pMyProxy->setZValue(10);
     lineEdits.push_back(pLineEdit);
 
+    connect(pLineEdit, &QLineEdit::textChanged, this, &QBlueprintNode::adjustLineEditWidth);
 
     QPointF outputPortPos = port->pos();
     pMyProxy->setPos(outputPortPos.x() - pLineEdit->width() + 210, outputPortPos.y() + 35 + (outputPorts.size()-1) * 30);
@@ -531,6 +503,19 @@ void QBlueprintNode::addLineEdit(QBlueprintPort* port)
 
     // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
     lineEdits.push_back(pLineEdit);
+}
+void QBlueprintNode::adjustLineEditWidth(const QString &text) {
+    // 创建 QFont 对象
+    QFont font; // 使用默认字体，或者根据需要设置特定的字体
+    QFontMetrics fontMetrics(font);
+
+    // 计算文本宽度
+    int textWidth = fontMetrics.horizontalAdvance(text);
+
+    // 设置 QLineEdit 的宽度，添加一些额外的边距
+    for (auto lineEdit : lineEdits) {  // 假设 lineEdits 是存储所有 QLineEdit 的列表
+        lineEdit->setFixedWidth(textWidth + 20);  // 添加20像素的边距
+    }
 }
 
 void QBlueprintNode::addInputLabel(QBlueprintPort* port)
@@ -558,7 +543,8 @@ void QBlueprintNode::addInputLabel(QBlueprintPort* port)
 
     // 设置代理的位置
     QPointF inputPortPos = port->pos();
-    pMyProxy->setPos(inputPortPos.x() - 200, inputPortPos.y()); // 设置代理在场景中的位置
+    qDebug() << inputPortPos;
+    pMyProxy->setPos(inputPortPos.x() - 215, inputPortPos.y()); // 设置代理在场景中的位置
     inputlabel.push_back(pLabel);
     // 设置代理大小
     pMyProxy->resize(containerWidget->size());
@@ -575,6 +561,7 @@ void QBlueprintNode::addInputLabel(QBlueprintPort* port)
     // 确保场景更新
     scene()->update();
 }
+
 
 void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inport)
 {

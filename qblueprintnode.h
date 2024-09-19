@@ -34,8 +34,8 @@ public:
     QBlueprintPort* addInputPort();
     QBlueprintPort* addOutputPort();
     // 添加输入和输出端口（带名称）
-    void addInputPort(const QString &name);
-    void addOutputPort(const QString &name);
+    QBlueprintPort* addInputPort(const QString &name);
+    QBlueprintPort* addOutputPort(const QString &name);
 
     const std::vector<QBlueprintPort *>& getInputPorts() const { return inputPorts; }
     const std::vector<QBlueprintPort *>& getOutputPorts() const { return outputPorts; }
@@ -105,6 +105,7 @@ private:
     void addInputLabel(QBlueprintPort* port);
     void addOutputLabel(QBlueprintPort* outport, QBlueprintPort* inport);
     void addButtonToTopLeft();
+    void adjustLineEditWidth(const QString &text);
 };
 
 #endif // QBLUEPRINTNODE_H
