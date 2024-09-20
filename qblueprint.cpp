@@ -1,5 +1,6 @@
 #include "qblueprint.h"
 #include "ui_qblueprint.h"
+#include <unordered_map>
 
 QBlueprint::QBlueprint(QWidget *parent)
     : QGraphicsView(parent), scene(new QGraphicsScene(this))  // 初始化场景
