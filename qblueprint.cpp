@@ -16,17 +16,16 @@ QBlueprint::QBlueprint(QWidget *parent)
     // 初始视图缩放
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     setBackgroundBrush(QColor(30, 30, 30));  // 设置深色背景
-    // 创建并添加节点到场景中
     createBlueprintNodes();
 
 }
 
-void QBlueprint::createBlueprintNodes()
+void QBlueprint::createBlueprintNodes() // 使用工厂方法基于函数生成节点
 {
-    // 使用工厂方法基于函数生成节点
+
     createOutputNode();
     createInputNode();
-    QBlueprintNode* testclass_add_node = QNodeFactory::createNodeFromFunction(this, &TestClass::add,"add","TestClass");// 自动获取函数名不正常，直接填写你需要的名称
+    QBlueprintNode* testclass_add_node = QNodeFactory::createNodeFromFunction(this, &TestClass::add,"add","TestClass"); // 自动获取函数名不正常，直接填写你需要的名称
     QBlueprintNode* testclass_test_node = QNodeFactory::createNodeFromFunction(this, &TestClass::test,"test", "TestClass");
     QBlueprintNode* qblueprint_add_node = QNodeFactory::createNodeFromFunction(this, &add,"add");
     QBlueprintNode* qblueprint_deletea_node = QNodeFactory::createNodeFromFunction(this, &deletea,"deletea");
@@ -36,10 +35,7 @@ void QBlueprint::createBlueprintNodes()
 
 void QBlueprint::classifyNodes()
 {
-    // 存储分类结果
     std::unordered_map<QString, std::vector<QString>> classifiedNodes;
-
-    // 遍历 save_nodes，将节点根据类名分类
     for (QBlueprintNode* node : save_nodes) {
         QString className = node->getClassName();
         QString functionName = node->getNodeTitle();
@@ -360,7 +356,7 @@ void QBlueprint::mouseReleaseEvent(QMouseEvent *event)
             }
         }
 
-        if (targetPort)
+        if (targetPort && (m_currentConnection->startPort()->getVarTypeName()==targetPort->getVarTypeName()))
         {
             qDebug() << "Found target port:" << targetPort->name();
             // 连接两个端口

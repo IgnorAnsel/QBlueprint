@@ -265,7 +265,7 @@ void QBlueprintNode::addButtonToTopLeft()
             case DataType::QIMAGE:{
                 QBlueprintPort * port = addOutputPort(getEnumName(dataType));
                 imageNodePortSort();
-                addInputLabel(outputPorts[outputPorts.size()-1]);
+                addInputLabel(port);
                 break;
             }
             default:
@@ -289,7 +289,7 @@ void QBlueprintNode::addButtonToTopLeft()
                 QBlueprintPort * outputport = addOutputPort(getEnumName(dataType));
                 QBlueprintPort * inputport = addInputPort(getEnumName(dataType));
                 customNodePortSort();
-                addOutputLabel(outputport,inputPorts[inputPorts.size()-1]);
+                addOutputLabel(outputport,inputport);
                 break;
             }
             case DataType::QIMAGE:{
@@ -315,6 +315,7 @@ QBlueprintPort* QBlueprintNode::addInputPort()
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "NULL", this);
     port->setNodeType(nodeType);
+    setQVariantType(port);
     inputPorts.push_back(port);
     return port;
 }
@@ -323,6 +324,7 @@ QBlueprintPort* QBlueprintNode::addOutputPort()
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "NULL", this);
     port->setNodeType(nodeType);
+    setQVariantType(port);
     outputPorts.push_back(port);
     return port;
 }
@@ -331,15 +333,18 @@ QBlueprintPort* QBlueprintNode::addInputPort(const QString &name)
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, name, this);
     port->setNodeType(nodeType);
-    qDebug() << "input" << nodeType << port->getNodeType();
+    setQVariantType(port);
     inputPorts.push_back(port);
+    return port;
 }
 
 QBlueprintPort* QBlueprintNode::addOutputPort(const QString &name)
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, name, this);
     port->setNodeType(nodeType);
+    setQVariantType(port);
     outputPorts.push_back(port);
+    return port;
 }
 
 void QBlueprintNode::setNodeTitle(QString name)
@@ -368,6 +373,79 @@ QVariant QBlueprintNode::itemChange(GraphicsItemChange change, const QVariant &v
     }
 
     return QGraphicsItem::itemChange(change, value);
+}
+
+void QBlueprintNode::setQVariantType(QBlueprintPort* port)
+{
+    switch (dataType) {
+    case DataType::INT:
+        port->setVarType(QVariant::fromValue(int())); // 设置为 int 类型
+        break;
+    case DataType::FLOAT:
+        port->setVarType(QVariant::fromValue(float())); // 设置为 float 类型
+        break;
+    case DataType::DOUBLE:
+        port->setVarType(QVariant::fromValue(double())); // 设置为 double 类型
+        break;
+    case DataType::CHAR:
+        port->setVarType(QVariant::fromValue(char())); // 设置为 char 类型
+        break;
+    case DataType::STRING:
+        port->setVarType(QVariant::fromValue(QString())); // 设置为 QString 类型
+        break;
+    case DataType::BOOL:
+        port->setVarType(QVariant::fromValue(bool())); // 设置为 bool 类型
+        break;
+    case DataType::LONG:
+        port->setVarType(QVariant::fromValue(qint64())); // 设置为 long 类型 (qint64)
+        break;
+    case DataType::SHORT:
+        port->setVarType(QVariant::fromValue(short())); // 设置为 short 类型
+        break;
+    case DataType::UNSIGNED_INT:
+        port->setVarType(QVariant::fromValue(uint())); // 设置为 unsigned int 类型
+        break;
+    case DataType::VARIANT:
+        port->setVarType(QVariant()); // QVariant 自身
+        break;
+    case DataType::QSTRING:
+        port->setVarType(QVariant::fromValue(QString())); // 设置为 QString 类型
+        break;
+    case DataType::QTIME:
+        port->setVarType(QVariant::fromValue(QTime())); // 设置为 QTime 类型
+        break;
+    case DataType::QPOINT:
+        port->setVarType(QVariant::fromValue(QPoint())); // 设置为 QPoint 类型
+        break;
+    case DataType::QPOINTF:
+        port->setVarType(QVariant::fromValue(QPointF())); // 设置为 QPointF 类型
+        break;
+    case DataType::QSIZE:
+        port->setVarType(QVariant::fromValue(QSize())); // 设置为 QSize 类型
+        break;
+    case DataType::QSIZEF:
+        port->setVarType(QVariant::fromValue(QSizeF())); // 设置为 QSizeF 类型
+        break;
+    case DataType::QRECT:
+        port->setVarType(QVariant::fromValue(QRect())); // 设置为 QRect 类型
+        break;
+    case DataType::QRECTF:
+        port->setVarType(QVariant::fromValue(QRectF())); // 设置为 QRectF 类型
+        break;
+    case DataType::QCOLOR:
+        port->setVarType(QVariant::fromValue(QColor())); // 设置为 QColor 类型
+        break;
+    case DataType::QPIXMAP:
+        port->setVarType(QVariant::fromValue(QPixmap())); // 设置为 QPixmap 类型
+        break;
+    case DataType::QIMAGE:
+        port->setVarType(QVariant::fromValue(QImage())); // 设置为 QImage 类型
+        break;
+    default:
+        port->setVarType(QVariant()); // 默认设置为一个空的 QVariant
+        break;
+    }
+
 }
 
 void QBlueprintNode::customNodePortSort() {
@@ -426,8 +504,6 @@ void QBlueprintNode::initInputOrOutput(enum Type Type, DataType datatype)
         case UNSIGNED_INT:
         case VARIANT:
         case QSTRING:
-        case QDATE:
-        case QDATETIME:
         case QTIME:
         case QPOINT:
         case QPOINTF:
@@ -438,9 +514,6 @@ void QBlueprintNode::initInputOrOutput(enum Type Type, DataType datatype)
         case QCOLOR:
         case QPIXMAP:
         case QIMAGE:
-        case QPEN:
-        case QBRUSH:
-        case QFONT:
             break;
         }
     }
@@ -509,9 +582,6 @@ void QBlueprintNode::initData(DataType datatype)
         break;
     case DataType::QSTRING:
         qStringData = new std::vector<QString>();
-        break;
-    case DataType::QDATE:
-        qDateData = new std::vector<QDate>();
         break;
     // case :
     //     = new std::vector<>();

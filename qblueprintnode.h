@@ -57,6 +57,7 @@ public:
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 private:
+    void setQVariantType(QBlueprintPort* port);
     void customNodePortSort();
     void imageNodePortSort();
     void initInputOrOutput(enum Type Type, DataType datatype);
@@ -82,9 +83,6 @@ private:
     std::vector<unsigned int>* unsignedIntData = nullptr;  // UNSIGNED_INT
     std::vector<QVariant>* variantData = nullptr;      // VARIANT
     std::vector<QString>* qStringData = nullptr;       // QSTRING
-    std::vector<QDate>* qDateData = nullptr;           // QDATE
-    std::vector<QDateTime>* qDateTimeData = nullptr;   // QDATETIME
-    std::vector<QTime>* qTimeData = nullptr;           // QTIME
     std::vector<QPoint>* qPointData = nullptr;         // QPOINT
     std::vector<QPointF>* qPointFData = nullptr;       // QPOINTF
     std::vector<QSize>* qSizeData = nullptr;           // QSIZE
@@ -94,9 +92,6 @@ private:
     std::vector<QColor>* qColorData = nullptr;         // QCOLOR
     std::vector<QPixmap>* qPixmapData = nullptr;       // QPIXMAP
     std::vector<QImage>* qImageData = nullptr;         // QIMAGE
-    std::vector<QPen>* qPenData = nullptr;             // QPEN
-    std::vector<QBrush>* qBrushData = nullptr;         // QBRUSH
-    std::vector<QFont>* qFontData = nullptr;           // QFONT
     //------------------------- 节点输入 --------------------------------//
     std::vector<QLineEdit*> lineEdits;
     std::vector<QLabel*> inputlabel;

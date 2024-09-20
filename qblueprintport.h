@@ -37,9 +37,12 @@ public:
     void removeConnections();
     void sendDataToConnectedPorts(const QString &data);
     void receiveData(const QString &data);
+    void setVarType(const QVariant &value);
+    QString getVarTypeName() const; // 获取 var 类型名称的方法
 protected:
     //void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 private:
+    QVariant var;
     enum Type parentnodeType;
     std::vector<QBlueprintConnection*> connections;  // 存储连接的指针
     PortType m_type;

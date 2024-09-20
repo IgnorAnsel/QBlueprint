@@ -140,3 +140,13 @@ void QBlueprintPort::receiveData(const QString& data)
         }
     }
 }
+
+void QBlueprintPort::setVarType(const QVariant &value)
+{
+    var = value;
+}
+
+QString QBlueprintPort::getVarTypeName() const
+{
+    return var.typeName();
+}
