@@ -1,17 +1,18 @@
 #include "qblueprintport.h"
 #include "qblueprintconnection.h"
 #include "qblueprint.h"
-QBlueprintPort::QBlueprintPort(PortType type, const QString &name, QGraphicsItem *parent)
-    : QGraphicsItem(parent), m_type(type), m_name(name),m_font(QFont("Arial", 10))
+QBlueprintPort::QBlueprintPort(PortType type, const QString &name, DataType dataType, QGraphicsItem *parent)
+    : QGraphicsItem(parent), m_type(type), m_name(name),m_font(QFont("Arial", 10)),dataType(dataType)
 {
     setFlag(QGraphicsItem::ItemIsMovable, false);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
+    setQVariantType();
     setZValue(2);
 }
 QBlueprintPort* QBlueprintPort::clone() const
 {
     // 创建一个新的 QBlueprintPort 实例并复制所需的属性
-    QBlueprintPort* newPort = new QBlueprintPort(this->m_type, this->m_name, nullptr); // 注意这里 parent 设为 nullptr
+    QBlueprintPort* newPort = new QBlueprintPort(this->m_type, this->m_name, this->dataType, nullptr); // 注意这里 parent 设为 nullptr
     newPort->setNodeType(this->parentnodeType);
     // 复制属性
     return newPort;
@@ -25,23 +26,39 @@ QRectF QBlueprintPort::boundingRect() const
 
 void QBlueprintPort::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    // 绘制端口（不同类型的端口使用不同的颜色）
-    painter->setBrush((m_type == Input) ? Qt::blue : Qt::green);  // 输入端口为蓝色，输出端口为绿色
-    painter->drawEllipse(boundingRect());  // 绘制圆形端口
-
-
     painter->setFont(m_font);  // 使用成员变量中的字体
 
     // 获取字体的度量信息，用来计算文本宽度
     QFontMetrics fontMetrics(m_font);
-
-    // 动态计算端口名称的宽度
     int textWidth = fontMetrics.horizontalAdvance(m_name);
     int textHeight = fontMetrics.height();
+
+    // 绘制端口
+    if (m_type == EVENT_INPUT || m_type == EVENT_OUTPUT)
+    {
+        // 绘制朝右的三角形
+        QPolygonF triangle;
+        qreal size = 5; // 三角形的大小
+        QPointF center = boundingRect().center(); // 获取中心位置
+
+        // 定义三角形的三个顶点
+        triangle << QPointF(center.x() - size, center.y() - size); // 左上顶点
+        triangle << QPointF(center.x() - size, center.y() + size); // 左下顶点
+        triangle << QPointF(center.x() + size, center.y());        // 右侧顶点
+
+        painter->setBrush(Qt::white); // 设置三角形为白色
+        painter->drawPolygon(triangle); // 绘制三角形
+    }
+    else
+    {
+        // 绘制圆形端口
+        painter->setBrush((m_type == Input) ? Qt::blue : Qt::green);  // 输入端口为蓝色，输出端口为绿色
+        painter->drawEllipse(boundingRect());  // 绘制圆形端口
+    }
+
     // 绘制端口名称，放在端口旁边
     painter->setPen(Qt::white);
-
-    if (m_type == Input)
+    if (m_type == Input || m_type == EVENT_INPUT)
     {
         // 输入端口：名称在端口的右边，左对齐
         QRectF textRect = boundingRect().translated(boundingRect().width() + 10, 0);  // 向右移动文本区域，留出10像素的间距
@@ -58,6 +75,9 @@ void QBlueprintPort::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
         painter->drawText(textRect, Qt::AlignRight | Qt::AlignVCenter, m_name);  // 名称放在左侧，右对齐
     }
 }
+
+
+
 
 QPointF QBlueprintPort::centerPos() const
 {
@@ -149,4 +169,75 @@ void QBlueprintPort::setVarType(const QVariant &value)
 QString QBlueprintPort::getVarTypeName() const
 {
     return var.typeName();
+}
+void QBlueprintPort::setQVariantType()
+{
+    switch (dataType) {
+    case DataType::INT:
+        setVarType(QVariant::fromValue(int())); // 设置为 int 类型
+        break;
+    case DataType::FLOAT:
+        setVarType(QVariant::fromValue(float())); // 设置为 float 类型
+        break;
+    case DataType::DOUBLE:
+        setVarType(QVariant::fromValue(double())); // 设置为 double 类型
+        break;
+    case DataType::CHAR:
+        setVarType(QVariant::fromValue(char())); // 设置为 char 类型
+        break;
+    case DataType::STRING:
+        setVarType(QVariant::fromValue(QString())); // 设置为 QString 类型
+        break;
+    case DataType::BOOL:
+        setVarType(QVariant::fromValue(bool())); // 设置为 bool 类型
+        break;
+    case DataType::LONG:
+        setVarType(QVariant::fromValue(qint64())); // 设置为 long 类型 (qint64)
+        break;
+    case DataType::SHORT:
+        setVarType(QVariant::fromValue(short())); // 设置为 short 类型
+        break;
+    case DataType::UNSIGNED_INT:
+        setVarType(QVariant::fromValue(uint())); // 设置为 unsigned int 类型
+        break;
+    case DataType::VARIANT:
+        setVarType(QVariant()); // QVariant 自身
+        break;
+    case DataType::QSTRING:
+        setVarType(QVariant::fromValue(QString())); // 设置为 QString 类型
+        break;
+    case DataType::QTIME:
+        setVarType(QVariant::fromValue(QTime())); // 设置为 QTime 类型
+        break;
+    case DataType::QPOINT:
+        setVarType(QVariant::fromValue(QPoint())); // 设置为 QPoint 类型
+        break;
+    case DataType::QPOINTF:
+        setVarType(QVariant::fromValue(QPointF())); // 设置为 QPointF 类型
+        break;
+    case DataType::QSIZE:
+        setVarType(QVariant::fromValue(QSize())); // 设置为 QSize 类型
+        break;
+    case DataType::QSIZEF:
+        setVarType(QVariant::fromValue(QSizeF())); // 设置为 QSizeF 类型
+        break;
+    case DataType::QRECT:
+        setVarType(QVariant::fromValue(QRect())); // 设置为 QRect 类型
+        break;
+    case DataType::QRECTF:
+        setVarType(QVariant::fromValue(QRectF())); // 设置为 QRectF 类型
+        break;
+    case DataType::QCOLOR:
+        setVarType(QVariant::fromValue(QColor())); // 设置为 QColor 类型
+        break;
+    case DataType::QPIXMAP:
+        setVarType(QVariant::fromValue(QPixmap())); // 设置为 QPixmap 类型
+        break;
+    case DataType::QIMAGE:
+        setVarType(QVariant::fromValue(QImage())); // 设置为 QImage 类型
+        break;
+    default:
+        setVarType(QVariant()); // 默认设置为一个空的 QVariant
+        break;
+    }
 }

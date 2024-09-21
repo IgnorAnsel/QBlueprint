@@ -7,7 +7,10 @@ QBlueprintConnection::QBlueprintConnection(QBlueprintPort *startPort, QBlueprint
 {
     // 初始化起点和终点坐标
     m_startPoint = startPort->centerPos();
-    m_startColor = getColorFromType(startPort->getNodeType());
+    if(startPort->portType() == QBlueprintPort::EVENT_INPUT || startPort->portType() == QBlueprintPort::EVENT_OUTPUT)
+        m_startColor = Qt::white;
+    else
+        m_startColor = getColorFromType(startPort->getNodeType());
     qDebug() << startPort->getNodeType();
     if (endPort)
     {
@@ -95,7 +98,7 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
     qreal dy = m_endPoint.y() - m_startPoint.y();
     qreal offset = qAbs(dx) * 0.6;  // 控制点偏移量
 
-    if (m_startPort->portType() == QBlueprintPort::Output)
+    if (m_startPort->portType() == QBlueprintPort::Output || m_startPort->portType() == QBlueprintPort::EVENT_OUTPUT)
     {
         if (dx > 0)
         {
@@ -108,7 +111,7 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
             controlPoint2 = m_endPoint - QPointF(offset, -dy * 0.5);
         }
     }
-    else if (m_startPort->portType() == QBlueprintPort::Input)
+    else if (m_startPort->portType() == QBlueprintPort::Input || m_startPort->portType() == QBlueprintPort::EVENT_INPUT)
     {
         if (dx > 0)
         {

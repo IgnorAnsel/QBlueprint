@@ -63,6 +63,7 @@ private:
     template <typename Ret, typename ClassType, typename... Args>
     static void parseInputPorts(QBlueprintNode* node, Ret(ClassType::*)(Args...))
     {
+        qDebug() << "function";
         (node->addInputPort(getTypeName<Args>()), ...);
     }
 

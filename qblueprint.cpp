@@ -351,22 +351,37 @@ void QBlueprint::mouseReleaseEvent(QMouseEvent *event)
         for (QGraphicsItem *item : scene->items(scenePos))
         {
             targetPort = dynamic_cast<QBlueprintPort*>(item);
-            if (targetPort && targetPort != m_draggingPort && targetPort->portType() != m_draggingPort->portType())
+            if (targetPort && targetPort != m_draggingPort && targetPort->portType() != m_draggingPort->portType()&&targetPort->parentItem() != m_draggingPort->parentItem())
             {
                 break;  // 找到目标端口，退出循环
             }
         }
-
-        if (targetPort && (m_currentConnection->startPort()->getVarTypeName()==targetPort->getVarTypeName()))
+        if(targetPort)
         {
-            qDebug() << "Found target port:" << targetPort->name();
-            // 连接两个端口
-            m_currentConnection->setEndPort(targetPort);
+            if((targetPort->portType() == QBlueprintPort::EVENT_INPUT && m_currentConnection->startPort()->portType() == QBlueprintPort::EVENT_OUTPUT)
+                ||(targetPort->portType() == QBlueprintPort::EVENT_OUTPUT && m_currentConnection->startPort()->portType() == QBlueprintPort::EVENT_INPUT))
+            {
+                qDebug() << "事件端口连接";
+                m_currentConnection->setEndPort(targetPort);
+            }
+            else if ((m_currentConnection->startPort()->getVarTypeName()==targetPort->getVarTypeName())
+                     && targetPort->portType()!=QBlueprintPort::EVENT_INPUT && targetPort->portType()!=QBlueprintPort::EVENT_OUTPUT)
+            {
+                qDebug() << "Found target port:" << targetPort->name();
+                // 连接两个端口
+                m_currentConnection->setEndPort(targetPort);
+            }
+            else if(m_currentConnection->startPort()->getVarTypeName()==targetPort->getVarTypeName())
+                qDebug() << "真的吗";
+            else
+            {
+                qDebug() << m_currentConnection->startPort()->getVarTypeName() << " vs " << targetPort->getVarTypeName();
+                removeConnection(m_currentConnection); // 删除连接
+            }
         }
         else
-        {
-            removeConnection(m_currentConnection); // 删除连接
-        }
+            removeConnection(m_currentConnection);
+
 
         m_currentConnection = nullptr;
         m_draggingPort = nullptr;

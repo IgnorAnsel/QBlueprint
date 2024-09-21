@@ -6,7 +6,6 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
 {
     // 启用拖动（节点可以被鼠标拖动）
     setFlag(QGraphicsItem::ItemIsMovable);
-
     // 启用选择（节点可以被点击选中）
     setFlag(QGraphicsItem::ItemIsSelectable);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -44,6 +43,8 @@ QBlueprintNode* QBlueprintNode::clone() const
     newNode->setNodeTitle(this->m_name);
     newNode->setClassName(this->class_name);
     newNode->setNodeType(this->nodeType);
+    newNode->addInputPort(Type::INPUT);
+    newNode->addOutputPort(Type::OUTPUT);
     // 克隆输入端口
     for (QBlueprintPort* port : this->inputPorts) {
         QBlueprintPort* clonedPort = port->clone(); // 假设 QBlueprintPort 有一个 clone 方法
@@ -314,7 +315,7 @@ void QBlueprintNode::addButtonToTopLeft()
 
 QBlueprintPort* QBlueprintNode::addInputPort()
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "NULL", this);
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "NULL", dataType, this);
     port->setNodeType(nodeType);
     setQVariantType(port);
     inputPorts.push_back(port);
@@ -323,7 +324,7 @@ QBlueprintPort* QBlueprintNode::addInputPort()
 
 QBlueprintPort* QBlueprintNode::addOutputPort()
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "NULL", this);
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "NULL", dataType, this);
     port->setNodeType(nodeType);
     setQVariantType(port);
     outputPorts.push_back(port);
@@ -332,7 +333,12 @@ QBlueprintPort* QBlueprintNode::addOutputPort()
 
 QBlueprintPort* QBlueprintNode::addInputPort(const QString &name)
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, name, this);
+    DataType datatype = dataType;
+    if(dataType == DataType::FOR_FUNCTION)
+    {
+        datatype = getEnumFromName(name);
+    }
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, name, datatype, this);
     port->setNodeType(nodeType);
     setQVariantType(port);
     inputPorts.push_back(port);
@@ -341,7 +347,29 @@ QBlueprintPort* QBlueprintNode::addInputPort(const QString &name)
 
 QBlueprintPort* QBlueprintNode::addOutputPort(const QString &name)
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, name, this);
+    DataType datatype = dataType;
+    if(dataType == DataType::FOR_FUNCTION)
+    {
+        datatype = getEnumFromName(name);
+        qDebug() << "eaesaeasease" << datatype;
+    }
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, name, datatype, this);
+    port->setNodeType(nodeType);
+    setQVariantType(port);
+    outputPorts.push_back(port);
+    return port;
+}
+QBlueprintPort* QBlueprintNode::addInputPort(enum Type Type)
+{
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this);
+    port->setNodeType(nodeType);
+    setQVariantType(port);
+    inputPorts.push_back(port);
+    return port;
+}
+QBlueprintPort* QBlueprintNode::addOutputPort(enum Type Type)
+{
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_OUTPUT, "", dataType, this);
     port->setNodeType(nodeType);
     setQVariantType(port);
     outputPorts.push_back(port);
@@ -378,7 +406,7 @@ QVariant QBlueprintNode::itemChange(GraphicsItemChange change, const QVariant &v
 
 void QBlueprintNode::setQVariantType(QBlueprintPort* port)
 {
-    switch (dataType) {
+    switch (port->portDataType()) {
     case DataType::INT:
         port->setVarType(QVariant::fromValue(int())); // 设置为 int 类型
         break;
