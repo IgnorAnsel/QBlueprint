@@ -1,7 +1,7 @@
-#ifndef QNODEFACTORY_H
-#define QNODEFACTORY_H
+#pragma once // 只允许包含一次
 
 #include "qblueprintnode.h"
+#include "qblueprint.h"
 #include <type_traits>
 #include <tuple>
 #include <QRegularExpression>
@@ -63,6 +63,7 @@ private:
     template <typename Ret, typename ClassType, typename... Args>
     static void parseInputPorts(QBlueprintNode* node, Ret(ClassType::*)(Args...))
     {
+        qDebug() << "function";
         (node->addInputPort(getTypeName<Args>()), ...);
     }
 
@@ -100,4 +101,3 @@ private:
 };
 
 
-#endif // QNODEFACTORY_H

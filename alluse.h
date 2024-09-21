@@ -75,6 +75,15 @@ static QString getEnumName(DataType dataType) {
     }
     return "UNKNOWN";
 }
+// 通过字符串获取对应的枚举值
+static DataType getEnumFromName(const QString& name) {
+    for (int i = 0; i < NUM_DATA_TYPES; ++i) {
+        if (DataTypeNames[i].compare(name, Qt::CaseInsensitive) == 0) {
+            return static_cast<DataType>(i); // 返回对应的枚举值
+        }
+    }
+    return FOR_FUNCTION; // 如果未找到，返回无效的值
+}
 class AllUse
 {
 public:
