@@ -1,7 +1,7 @@
-#ifndef QNODEFACTORY_H
-#define QNODEFACTORY_H
+#pragma once // 只允许包含一次
 
 #include "qblueprintnode.h"
+#include "qblueprint.h"
 #include <type_traits>
 #include <tuple>
 #include <QRegularExpression>
@@ -101,4 +101,3 @@ private:
 };
 
 
-#endif // QNODEFACTORY_H

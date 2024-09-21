@@ -5,7 +5,6 @@
 #include <QPainter>
 #include "alluse.h"
 class QBlueprintConnection;
-class QBlueprint;
 class QBlueprintPort : public QGraphicsItem
 {
 public:
