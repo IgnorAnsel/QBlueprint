@@ -1,5 +1,5 @@
 # QBlueprint(Qt5 Qt6兼容)
-
+[访问我的bilibili个人主页查看使用方法](https://space.bilibili.com/286896507?spm_id_from=333.1007.0.0)
 `QBlueprint` 是一个基于 Qt 实现的蓝图系统，类似于 Unreal Engine 中的蓝图系统。它允许用户通过节点连接的方式构建逻辑流，并支持通过函数创建节点。
 
 ## 功能介绍
