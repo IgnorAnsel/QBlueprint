@@ -1,4 +1,5 @@
 #include "qblueprintnode.h"
+#include <QDebug>
 
 QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem *parent)
     : QGraphicsItem(parent),dataType(datatype)
