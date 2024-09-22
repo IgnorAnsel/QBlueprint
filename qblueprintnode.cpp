@@ -1,4 +1,5 @@
 #include "qblueprintnode.h"
+#include "enterlimiter.h"
 #include <QDebug>
 
 QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem *parent)
@@ -12,7 +13,6 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     setFlag(QGraphicsItem::ItemIsMovable, true);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
     setFlag(QGraphicsItem::ItemAcceptsInputMethod, true);
-    //initData(dataType);
     initInputOrOutput(Type,datatype);
     setZValue(1);
     dataType = datatype;
@@ -670,6 +670,7 @@ void QBlueprintNode::addLineEdit(QBlueprintPort* port)
         port->sendDataToConnectedPorts();
     });
     // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
+    setEnterLimiter(pLineEdit,port);
     lineEdits.push_back(pLineEdit);
 }
 void QBlueprintNode::adjustLineEditWidth(const QString &text) {
