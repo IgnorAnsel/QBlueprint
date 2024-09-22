@@ -663,7 +663,12 @@ void QBlueprintNode::addLineEdit(QBlueprintPort* port)
     // });
     // 设置克隆的 QLineEdit 大小与原始的一致
     pMyProxy->resize(QSize(60, 10));
-
+    connect(pLineEdit, &QLineEdit::textChanged, [port, this](const QString &text) {
+        // 将数据存储在 port 的变量中
+        port->setVarType(text); // 存储数据为 QString 类型
+        // 发送数据到连接的端口
+        port->sendDataToConnectedPorts();
+    });
     // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
     lineEdits.push_back(pLineEdit);
 }
@@ -676,6 +681,15 @@ void QBlueprintNode::adjustLineEditWidth(const QString &text) {
     // 设置 QLineEdit 的宽度，添加一些额外的边距
     for (auto lineEdit : lineEdits) {
         lineEdit->setFixedWidth(textWidth + 20);  // 添加20像素的边距
+    }
+    // 通知场景准备重新计算节点的边界
+    prepareGeometryChange();
+    // 更新所有连接线的位置
+    for (auto port : outputPorts) {
+        port->updateConnections();
+    }
+    for (auto port : inputPorts) {
+        port->updateConnections();
     }
 }
 void QBlueprintNode::adjustLabelWidth(const QString &text) {
@@ -762,16 +776,36 @@ void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inp
     outputlabel.push_back(pLabel);
 }
 
-void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& data)
-{
-    // // 找到对应的 QLabel，并更新显示数据
-    // int index = inputPorts.indexOf(port);
-    // if (index >= 0 && index < outputlabel.size())
-    // {
-    //     QLabel* label = outputlabel[index];
-    //     label->setText(data);  // 更新 QLabel 显示的数据
-    // }
+// void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& data) {
+//     // 遍历 inputPorts 查找 port 的索引
+//     auto it = std::find(inputPorts.begin(), inputPorts.end(), port);
+//     if (it != inputPorts.end()) {
+//         // 计算索引
+//         int index = std::distance(inputPorts.begin(), it);
+
+//         // 确保索引在 outputlabel 范围内
+//         if (index < outputlabel.size()) {
+//             QLabel* label = outputlabel[index];
+//             label->setText(data);  // 更新 QLabel 显示的数据
+//         }
+//     }
+// }
+
+void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& data) {
+    auto it = std::find(inputPorts.begin(), inputPorts.end(), port);
+    if (it != inputPorts.end()) {
+        int index = std::distance(inputPorts.begin(), it) - 1;
+        qDebug() << "outputlabel" << outputlabel.size() << "index" << index;
+        if (index < outputlabel.size()) {
+            qDebug() << "找到了";
+            QLabel* label = outputlabel[index];
+            label->setText(data);
+            scene()->update();  // 强制更新场景
+        }
+    }
 }
+
+
 
 
 
