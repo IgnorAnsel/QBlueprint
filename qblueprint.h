@@ -1,5 +1,4 @@
-#ifndef QBLUEPRINT_H
-#define QBLUEPRINT_H
+#pragma once
 
 #include <QWidget>
 #include <QGraphicsView>
@@ -71,4 +70,3 @@ private:
     void addInputNode(DataType dataType);
 };
 
-#endif // QBLUEPRINT_H
