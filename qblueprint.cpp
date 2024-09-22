@@ -476,10 +476,11 @@ void QBlueprint::addInputNode(DataType dataType)
 }
 bool QBlueprint::isEventPortConnected(QBlueprintPort* outputPort, QBlueprintPort* inputPort) const {
     for (QBlueprintConnection* connection : connections) {
-        if ((connection->startPort() == outputPort && connection->endPort() == inputPort &&
+        qDebug() << "connection->startPort():" << connection->startPort()->portType() << "connection->endPort():" << connection->endPort()->portType();
+        if ((/*connection->startPort() == outputPort && connection->endPort() == inputPort &&*/
              connection->startPort()->portType() == QBlueprintPort::EVENT_OUTPUT &&
              connection->endPort()->portType() == QBlueprintPort::EVENT_INPUT) ||
-            (connection->startPort() == inputPort && connection->endPort() == outputPort &&
+            (/*connection->startPort() == inputPort && connection->endPort() == outputPort &&*/
              connection->startPort()->portType() == QBlueprintPort::EVENT_INPUT &&
              connection->endPort()->portType() == QBlueprintPort::EVENT_OUTPUT)) {
             return true;

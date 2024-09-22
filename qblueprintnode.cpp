@@ -1,7 +1,7 @@
 #include "qblueprintnode.h"
 #include "enterlimiter.h"
 #include <QDebug>
-
+#include "qblueprint.h"
 QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem *parent)
     : QGraphicsItem(parent),dataType(datatype)
 {
@@ -840,7 +840,8 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
     auto it = std::find(inputPorts.begin(), inputPorts.end(), inputPort);
     if (it != inputPorts.end()) {
         int index = std::distance(inputPorts.begin(), it) - 1;
-        if (index < outputlabel.size()) {
+        if ((index < outputlabel.size()) /*&& isPortConnected(inputPort, outputPorts[index])*/) {
+            qDebug() << " jisnadasuohduoas";
             QLabel* label = outputlabel[index];
             label->setText(data.toString());  // 更新 QLabel 显示的内容
             qDebug() << "更新 label 为:" << data.toString();
@@ -849,30 +850,39 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
     // 处理数据的逻辑，将数据传递给 outputPort
     for (QBlueprintPort* outputPort : outputPorts) {
         if (outputPort && isPortConnected(inputPort, outputPort)) {
-            qDebug() << "data:" << data;
+            qDebug() << "the data:" << data;
             outputPort->setVarType(data);  // 更新 outputPort 的数据
             outputPort->sendDataToConnectedPorts();  // 通过 outputPort 发送数据给下一个端口
         }
     }
 }
 bool QBlueprintNode::isPortConnected(QBlueprintPort* inputPort, QBlueprintPort* outputPort) {
-    // 查找 inputPort 在 inputPorts 中的索引
     auto inputIt = std::find(inputPorts.begin(), inputPorts.end(), inputPort);
-    if (inputIt == inputPorts.end()) {
-        return false;  // 如果找不到 inputPort，返回 false
-    }
-    int inputIndex = std::distance(inputPorts.begin(), inputIt);
-
-    // 查找 outputPort 在 outputPorts 中的索引
     auto outputIt = std::find(outputPorts.begin(), outputPorts.end(), outputPort);
-    if (outputIt == outputPorts.end()) {
-        return false;  // 如果找不到 outputPort，返回 false
+
+    if (inputIt == inputPorts.end() || outputIt == outputPorts.end()) {
+        return false;
     }
+
+    int inputIndex = std::distance(inputPorts.begin(), inputIt);
     int outputIndex = std::distance(outputPorts.begin(), outputIt);
 
-    // 比较索引是否相同
-    return inputIndex == outputIndex;
+    if (inputIndex != outputIndex) {
+        return false;
+    }
+
+    // 获取场景和 Blueprint 视图
+    QGraphicsScene* currentScene = scene();
+    QBlueprint* blueprintView = dynamic_cast<QBlueprint*>(currentScene->views().first());
+
+    if (blueprintView) {
+        qDebug() << "sadas" <<blueprintView->isEventPortConnected(outputPort, inputPort);
+        return blueprintView->isEventPortConnected(outputPort, inputPort);
+    }
+
+    return false;
 }
+
 
 
 

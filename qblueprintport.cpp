@@ -140,6 +140,7 @@ void QBlueprintPort::sendDataToConnectedPorts() {
                 QBlueprintPort* targetPort = connection->endPort();
                 if (targetPort) {
                     // 发送数据给 targetPort
+                    qDebug() << "Sending data from" << this->name() << "to" << targetPort->name();
                     targetPort->receiveData(var);
                 }
             }

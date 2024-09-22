@@ -12,12 +12,12 @@
 #include <QFileDialog>
 #include <QObject>
 #include "alluse.h"
-#include "qblueprint.h"
 #include "qblueprintport.h"
 #include "qblueprintconnection.h"
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsScene>
 #include <QGraphicsProxyWidget>
+class QBlueprint;
 class QBlueprintNode : public QObject, public QGraphicsItem
 {
     Q_OBJECT
