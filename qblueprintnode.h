@@ -12,6 +12,7 @@
 #include <QFileDialog>
 #include <QObject>
 #include "alluse.h"
+#include "qblueprint.h"
 #include "qblueprintport.h"
 #include "qblueprintconnection.h"
 #include <QGraphicsSceneMouseEvent>
@@ -56,6 +57,8 @@ public:
     void addDataType(DataType type) { dataTypes.push_back(type); }
     const std::vector<DataType>& getDataTypes() const { return dataTypes; }
     void updateLabelWithData(QBlueprintPort *port, const QString &data);
+    void processData(QBlueprintPort *inputPort, const QVariant &data);
+    bool isPortConnected(QBlueprintPort *inputPort, QBlueprintPort *outputPort);
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 private:

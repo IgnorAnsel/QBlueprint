@@ -665,7 +665,34 @@ void QBlueprintNode::addLineEdit(QBlueprintPort* port)
     pMyProxy->resize(QSize(60, 10));
     connect(pLineEdit, &QLineEdit::textChanged, [port, this](const QString &text) {
         // 将数据存储在 port 的变量中
-        port->setVarType(text); // 存储数据为 QString 类型
+        QVariant convertedValue;
+
+        // 根据端口的数据类型转换输入的值
+        switch (port->portDataType()) {
+        case DataType::INT:
+            convertedValue = QVariant::fromValue(text.toInt());
+            break;
+        case DataType::FLOAT:
+            convertedValue = QVariant::fromValue(text.toFloat());
+            break;
+        case DataType::DOUBLE:
+            convertedValue = QVariant::fromValue(text.toDouble());
+            break;
+        case DataType::BOOL:
+            convertedValue = QVariant::fromValue(text.toLower() == "true" || text == "1");
+            break;
+        case DataType::QSTRING:
+            convertedValue = QVariant::fromValue(text);
+            break;
+        // 添加其他类型的处理逻辑
+        default:
+            convertedValue = QVariant::fromValue(text);  // 默认保存为字符串
+            break;
+        }
+
+        // 将转换后的值存储到端口中
+        port->setVarType(convertedValue);
+        //port->setVarType(text);
         // 发送数据到连接的端口
         port->sendDataToConnectedPorts();
     });
@@ -798,13 +825,57 @@ void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& da
         int index = std::distance(inputPorts.begin(), it) - 1;
         qDebug() << "outputlabel" << outputlabel.size() << "index" << index;
         if (index < outputlabel.size()) {
-            qDebug() << "找到了";
             QLabel* label = outputlabel[index];
             label->setText(data);
             scene()->update();  // 强制更新场景
         }
     }
 }
+
+void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data) {
+    // 根据 inputPort 来判断需要处理的逻辑
+    qDebug() << "节点" << m_name << "接收到数据:" << data << "从端口:" << inputPort->name();
+
+    // 如果有对应的 QLabel 需要更新（例如在 inputPort 上有 QLabel）
+    auto it = std::find(inputPorts.begin(), inputPorts.end(), inputPort);
+    if (it != inputPorts.end()) {
+        int index = std::distance(inputPorts.begin(), it) - 1;
+        if (index < outputlabel.size()) {
+            QLabel* label = outputlabel[index];
+            label->setText(data.toString());  // 更新 QLabel 显示的内容
+            qDebug() << "更新 label 为:" << data.toString();
+        }
+    }
+    // 处理数据的逻辑，将数据传递给 outputPort
+    for (QBlueprintPort* outputPort : outputPorts) {
+        if (outputPort && isPortConnected(inputPort, outputPort)) {
+            qDebug() << "data:" << data;
+            outputPort->setVarType(data);  // 更新 outputPort 的数据
+            outputPort->sendDataToConnectedPorts();  // 通过 outputPort 发送数据给下一个端口
+        }
+    }
+}
+bool QBlueprintNode::isPortConnected(QBlueprintPort* inputPort, QBlueprintPort* outputPort) {
+    // 查找 inputPort 在 inputPorts 中的索引
+    auto inputIt = std::find(inputPorts.begin(), inputPorts.end(), inputPort);
+    if (inputIt == inputPorts.end()) {
+        return false;  // 如果找不到 inputPort，返回 false
+    }
+    int inputIndex = std::distance(inputPorts.begin(), inputIt);
+
+    // 查找 outputPort 在 outputPorts 中的索引
+    auto outputIt = std::find(outputPorts.begin(), outputPorts.end(), outputPort);
+    if (outputIt == outputPorts.end()) {
+        return false;  // 如果找不到 outputPort，返回 false
+    }
+    int outputIndex = std::distance(outputPorts.begin(), outputIt);
+
+    // 比较索引是否相同
+    return inputIndex == outputIndex;
+}
+
+
+
 
 
 

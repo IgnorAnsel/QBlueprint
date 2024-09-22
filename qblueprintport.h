@@ -38,7 +38,13 @@ public:
     void receiveData(const QVariant &data);
     void setVarType(const QVariant &value);
     QString getVarTypeName() const; // 获取 var 类型名称的方法
+    void setData(const QVariant& data) {
+        var = data;
+    }
 
+    QVariant data() const {
+        return var;
+    }
 protected:
     //void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 private:

@@ -148,17 +148,30 @@ void QBlueprintPort::sendDataToConnectedPorts() {
 }
 
 
+// void QBlueprintPort::receiveData(const QVariant &data) {
+//     // 更新端口的变量数据
+//     var = data;
+//     qDebug() << "有数据";
+//     // 通知父节点更新 UI 或其他逻辑
+//     QBlueprintNode* parentNode = dynamic_cast<QBlueprintNode*>(parentItem());
+//     if (parentNode) {
+//         parentNode->updateLabelWithData(this, data.toString());
+//     }
+//     sendDataToConnectedPorts();
+// }
 void QBlueprintPort::receiveData(const QVariant &data) {
-    // 更新端口的变量数据
-    var = data;
-    qDebug() << "有数据";
-    // 通知父节点更新 UI 或其他逻辑
+    // 更新当前端口的数据
+    setData(data);
+    qDebug() << "接收到数据:" << data;
+
+    // 通知父节点处理数据
     QBlueprintNode* parentNode = dynamic_cast<QBlueprintNode*>(parentItem());
     if (parentNode) {
-        parentNode->updateLabelWithData(this, data.toString());
+        parentNode->processData(this, data);  // 只处理当前端口的输入数据
     }
-    sendDataToConnectedPorts();
 }
+
+
 
 
 void QBlueprintPort::setVarType(const QVariant &value)
