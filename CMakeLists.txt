@@ -26,12 +26,16 @@ set(PROJECT_SOURCES
 #        qinputnode.h qinputnode.cpp
 #        qoutputnode.h qoutputnode.cpp
         alluse.h alluse.cpp
+        enterlimiter.h enterlimiter.cpp
+        math.h math.cpp
+
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(QBlueprint
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        enterlimiter.h enterlimiter.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET QBlueprint APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

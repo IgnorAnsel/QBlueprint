@@ -34,10 +34,17 @@ public:
     enum Type setNodeType(enum Type type){ parentnodeType = type; }
     void updateConnections();
     void removeConnections();
-    void sendDataToConnectedPorts(const QString &data);
-    void receiveData(const QString &data);
+    void sendDataToConnectedPorts();
+    void receiveData(const QVariant &data);
     void setVarType(const QVariant &value);
     QString getVarTypeName() const; // 获取 var 类型名称的方法
+    void setData(const QVariant& data) {
+        var = data;
+    }
+
+    QVariant data() const {
+        return var;
+    }
 protected:
     //void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 private:

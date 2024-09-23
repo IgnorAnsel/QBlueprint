@@ -139,8 +139,8 @@ void QBlueprintConnection::setEndPort(QBlueprintPort *endPort)
     if (m_endPort)
     {
         // 如果存在终点端口，更新终点坐标为端口的中心
-        //m_endColor = getColorFromType(endPort->getNodeType());
         updatePosition(m_startPort->centerPos(), m_endPort->centerPos());
+        m_startPort->sendDataToConnectedPorts();
     }
 }
 QBlueprintPort* QBlueprintConnection::startPort() const

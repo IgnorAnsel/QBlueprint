@@ -31,6 +31,14 @@ void QBlueprint::createBlueprintNodes() // 使用工厂方法基于函数生成�
     QBlueprintNode* qblueprint_add_node = QNodeFactory::createNodeFromFunction(this, &add,"add");
     QBlueprintNode* qblueprint_deletea_node = QNodeFactory::createNodeFromFunction(this, &deletea,"deletea");
 
+
+    // 创建 Math 相关的运算节点
+    QBlueprintNode* math_add_node = QNodeFactory::createNodeFromFunction(this, &Math::add, "add", "Math");
+    QBlueprintNode* math_subtract_node = QNodeFactory::createNodeFromFunction(this, &Math::subtract, "subtract", "Math");
+    QBlueprintNode* math_multiply_node = QNodeFactory::createNodeFromFunction(this, &Math::multiply, "multiply", "Math");
+    QBlueprintNode* math_divide_node = QNodeFactory::createNodeFromFunction(this, &Math::divide, "divide", "Math");
+    QBlueprintNode* math_sqrt_node = QNodeFactory::createNodeFromFunction(this, &Math::sqrt, "sqrt", "Math");
+    QBlueprintNode* math_pow_node = QNodeFactory::createNodeFromFunction(this, &Math::pow, "pow", "Math");
     classifyNodes();
 }
 
@@ -363,13 +371,16 @@ void QBlueprint::mouseReleaseEvent(QMouseEvent *event)
             {
                 qDebug() << "事件端口连接";
                 m_currentConnection->setEndPort(targetPort);
+                m_draggingPort->sendDataToConnectedPorts();
+                propagateDataFromInitialNode(m_currentConnection->startPort());
             }
-            else if ((m_currentConnection->startPort()->getVarTypeName()==targetPort->getVarTypeName())
+            else if (areTypesCompatible(m_currentConnection->startPort()->getVarTypeName(),targetPort->getVarTypeName())
                      && targetPort->portType()!=QBlueprintPort::EVENT_INPUT && targetPort->portType()!=QBlueprintPort::EVENT_OUTPUT)
             {
                 qDebug() << "Found target port:" << targetPort->name();
                 // 连接两个端口
                 m_currentConnection->setEndPort(targetPort);
+                m_draggingPort->sendDataToConnectedPorts();
             }
             else if(m_currentConnection->startPort()->getVarTypeName()==targetPort->getVarTypeName())
                 qDebug() << "真的吗";
@@ -474,3 +485,55 @@ void QBlueprint::addInputNode(DataType dataType)
     node->setNodeTitle(getEnumName(dataType));
     save_nodes.push_back(node);
 }
+bool QBlueprint::isEventPortConnected(QBlueprintPort* outputPort, QBlueprintPort* inputPort) const {
+    for (QBlueprintConnection* connection : connections) {
+        qDebug() << "connection->startPort():" << connection->startPort()->portType() << "connection->endPort():" << connection->endPort()->portType();
+        if ((/*connection->startPort() == outputPort && connection->endPort() == inputPort &&*/
+             connection->startPort()->portType() == QBlueprintPort::EVENT_OUTPUT &&
+             connection->endPort()->portType() == QBlueprintPort::EVENT_INPUT) ||
+            (/*connection->startPort() == inputPort && connection->endPort() == outputPort &&*/
+             connection->startPort()->portType() == QBlueprintPort::EVENT_INPUT &&
+             connection->endPort()->portType() == QBlueprintPort::EVENT_OUTPUT)) {
+            return true;
+        }
+    }
+    return false;
+}
+void QBlueprint::propagateDataFromInitialNode(QBlueprintPort* initialPort)
+{
+    if (!initialPort) return;
+
+    // 获取初始端口的父节点
+    QBlueprintNode* initialNode = dynamic_cast<QBlueprintNode*>(initialPort->parentItem());
+    if (!initialNode) return;
+
+    // 找到该节点的所有输出端口，并发送数据
+    for (QBlueprintPort* outputPort : initialNode->getOutputPorts())
+    {
+        outputPort->sendDataToConnectedPorts();
+    }
+}
+bool QBlueprint::isNumericType(const QString& type)
+{
+    return (type == "int" || type == "float" || type == "double" ||
+            type == "short" || type == "long" || type == "unsigned int");
+}
+// 类型兼容性检查函数
+bool QBlueprint::areTypesCompatible(const QString& type1, const QString& type2)
+{
+    // 如果是相同类型，直接返回 true
+    if (type1 == type2)
+        return true;
+
+    // 数值类型之间相互兼容
+    if (isNumericType(type1) && isNumericType(type2))
+        return true;
+
+    if ((type1 == "QString" && type2 == "char*") || (type1 == "char*" && type2 == "QString"))
+        return true;
+
+    // 默认情况下认为不兼容
+    return false;
+}
+
+

@@ -1,6 +1,4 @@
-#ifndef QBLUEPRINT_H
-#define QBLUEPRINT_H
-
+#pragma once
 #include <QWidget>
 #include <QGraphicsView>
 #include <QGraphicsScene>
@@ -11,12 +9,11 @@
 #include "qblueprintnode.h"
 #include "qblueprintconnection.h"
 #include "qnodefactory.h"
-//#include "qoutputnode.h"
-//#include "qinputnode.h"
+
 /****************************************************/
 // 在这里添加你的头文件
 #include "testclass.h"
-
+#include "math.h"
 
 /****************************************************/
 class QBlueprint : public QGraphicsView
@@ -38,6 +35,8 @@ public:
     static int deletea(int a);
     void placeNodeInScene(QBlueprintNode *originalNode, const QPointF& mousePos);
     void pushVectorQBlueprintNode(QBlueprintNode* node);
+    bool isEventPortConnected(QBlueprintPort *outputPort, QBlueprintPort *inputPort) const;
+    void propagateDataFromInitialNode(QBlueprintPort *initialPort);
 protected:
     void drawBackground(QPainter *painter, const QRectF &rect) override;
     void wheelEvent(QWheelEvent *event) override;
@@ -69,6 +68,7 @@ private:
 
     void addOutputNode(DataType dataType);
     void addInputNode(DataType dataType);
+    bool isNumericType(const QString &type);
+    bool areTypesCompatible(const QString &type1, const QString &type2);
 };
 
-#endif // QBLUEPRINT_H

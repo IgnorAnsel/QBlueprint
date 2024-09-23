@@ -1,6 +1,7 @@
 #include "qblueprintnode.h"
+#include "enterlimiter.h"
 #include <QDebug>
-
+#include "qblueprint.h"
 QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem *parent)
     : QGraphicsItem(parent),dataType(datatype)
 {
@@ -12,7 +13,6 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     setFlag(QGraphicsItem::ItemIsMovable, true);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
     setFlag(QGraphicsItem::ItemAcceptsInputMethod, true);
-    //initData(dataType);
     initInputOrOutput(Type,datatype);
     setZValue(1);
     dataType = datatype;
@@ -43,8 +43,11 @@ QBlueprintNode* QBlueprintNode::clone() const
     newNode->setNodeTitle(this->m_name);
     newNode->setClassName(this->class_name);
     newNode->setNodeType(this->nodeType);
-    newNode->addInputPort(Type::INPUT);
-    newNode->addOutputPort(Type::OUTPUT);
+    if(newNode->nodeType != Type::INPUT) // 输入节点是不需要添加事件端口的
+    {
+        newNode->addInputPort(Type::INPUT); // 添加事件端口
+        newNode->addOutputPort(Type::OUTPUT);
+    }
     // 克隆输入端口
     for (QBlueprintPort* port : this->inputPorts) {
         QBlueprintPort* clonedPort = port->clone(); // 假设 QBlueprintPort 有一个 clone 方法
@@ -663,8 +666,41 @@ void QBlueprintNode::addLineEdit(QBlueprintPort* port)
     // });
     // 设置克隆的 QLineEdit 大小与原始的一致
     pMyProxy->resize(QSize(60, 10));
+    connect(pLineEdit, &QLineEdit::textChanged, [port, this](const QString &text) {
+        // 将数据存储在 port 的变量中
+        QVariant convertedValue;
 
+        // 根据端口的数据类型转换输入的值
+        switch (port->portDataType()) {
+        case DataType::INT:
+            convertedValue = QVariant::fromValue(text.toInt());
+            break;
+        case DataType::FLOAT:
+            convertedValue = QVariant::fromValue(text.toFloat());
+            break;
+        case DataType::DOUBLE:
+            convertedValue = QVariant::fromValue(text.toDouble());
+            break;
+        case DataType::BOOL:
+            convertedValue = QVariant::fromValue(text.toLower() == "true" || text == "1");
+            break;
+        case DataType::QSTRING:
+            convertedValue = QVariant::fromValue(text);
+            break;
+        // 添加其他类型的处理逻辑
+        default:
+            convertedValue = QVariant::fromValue(text);  // 默认保存为字符串
+            break;
+        }
+
+        // 将转换后的值存储到端口中
+        port->setVarType(convertedValue);
+        //port->setVarType(text);
+        // 发送数据到连接的端口
+        port->sendDataToConnectedPorts();
+    });
     // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
+    setEnterLimiter(pLineEdit,port);
     lineEdits.push_back(pLineEdit);
 }
 void QBlueprintNode::adjustLineEditWidth(const QString &text) {
@@ -676,6 +712,15 @@ void QBlueprintNode::adjustLineEditWidth(const QString &text) {
     // 设置 QLineEdit 的宽度，添加一些额外的边距
     for (auto lineEdit : lineEdits) {
         lineEdit->setFixedWidth(textWidth + 20);  // 添加20像素的边距
+    }
+    // 通知场景准备重新计算节点的边界
+    prepareGeometryChange();
+    // 更新所有连接线的位置
+    for (auto port : outputPorts) {
+        port->updateConnections();
+    }
+    for (auto port : inputPorts) {
+        port->updateConnections();
     }
 }
 void QBlueprintNode::adjustLabelWidth(const QString &text) {
@@ -762,16 +807,130 @@ void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inp
     outputlabel.push_back(pLabel);
 }
 
-void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& data)
-{
-    // // 找到对应的 QLabel，并更新显示数据
-    // int index = inputPorts.indexOf(port);
-    // if (index >= 0 && index < outputlabel.size())
-    // {
-    //     QLabel* label = outputlabel[index];
-    //     label->setText(data);  // 更新 QLabel 显示的数据
-    // }
+// void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& data) {
+//     // 遍历 inputPorts 查找 port 的索引
+//     auto it = std::find(inputPorts.begin(), inputPorts.end(), port);
+//     if (it != inputPorts.end()) {
+//         // 计算索引
+//         int index = std::distance(inputPorts.begin(), it);
+
+//         // 确保索引在 outputlabel 范围内
+//         if (index < outputlabel.size()) {
+//             QLabel* label = outputlabel[index];
+//             label->setText(data);  // 更新 QLabel 显示的数据
+//         }
+//     }
+// }
+
+void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& data) {
+    auto it = std::find(inputPorts.begin(), inputPorts.end(), port);
+    if (it != inputPorts.end()) {
+        int index = std::distance(inputPorts.begin(), it) - 1;
+        qDebug() << "outputlabel" << outputlabel.size() << "index" << index;
+        if (index < outputlabel.size()) {
+            QLabel* label = outputlabel[index];
+            label->setText(data);
+            scene()->update();  // 强制更新场景
+        }
+    }
 }
+
+void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data) {
+    // 根据 inputPort 来判断需要处理的逻辑
+    qDebug() << "节点" << m_name << "接收到数据:" << data << "从端口:" << inputPort->name();
+
+    // 如果有对应的 QLabel 需要更新（例如在 inputPort 上有 QLabel）
+    auto it = std::find(inputPorts.begin(), inputPorts.end(), inputPort);
+    if (it != inputPorts.end()) {
+        int index = std::distance(inputPorts.begin(), it) - 1;
+        if ((index < outputlabel.size()) /*&& isPortConnected(inputPort, outputPorts[index])*/) {
+            QLabel* label = outputlabel[index];
+            label->setText(data.toString());  // 更新 QLabel 显示的内容
+        }
+    }
+    QVariant result;
+    if (m_name == "add" && class_name == "Math") {
+        // 加法操作
+        result = Math::add(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+    }
+    else if (m_name == "subtract" && class_name == "Math") {
+        // 减法操作
+        result = Math::subtract(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+
+    }
+    else if (m_name == "multiply" && class_name == "Math") {
+        // 乘法操作
+        result = Math::multiply(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+
+    }
+    else if (m_name == "divide" && class_name == "Math") {
+        // 除法操作，检查除数是否为零
+        result = Math::divide(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+
+    }
+    else if (m_name == "sqrt" && class_name == "Math") {
+        // 开方操作，只需要一个输入
+        result = Math::sqrt(inputPorts[1]->data().toDouble());
+
+    }
+    else if (m_name == "pow" && class_name == "Math") {
+        result = Math::pow(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+    }
+    else if (m_name == "deletea") {
+
+    }
+    if(inputPort->getNodeType() == Type::FUNCTION)
+        for (QBlueprintPort* outputPort : outputPorts) {
+            if (outputPort) {
+                outputPort->setVarType(result); // 更新输出端口的 var
+                outputPort->sendDataToConnectedPorts(); // 发送数据到连接的下一个端口
+            }
+        }
+    // 处理数据的逻辑，将数据传递给 outputPort
+    else
+        for (QBlueprintPort* outputPort : outputPorts) {
+            if (outputPort && isPortConnected(inputPort, outputPort)) {
+                qDebug() << "the data:" << data;
+                outputPort->setVarType(data);  // 更新 outputPort 的数据
+                outputPort->sendDataToConnectedPorts();  // 通过 outputPort 发送数据给下一个端口
+            }
+        }
+
+}
+bool QBlueprintNode::isPortConnected(QBlueprintPort* inputPort, QBlueprintPort* outputPort) {
+    if(inputPort->getNodeType()==Type::FUNCTION && outputPort->getNodeType()==Type::FUNCTION)
+        return true;
+    auto inputIt = std::find(inputPorts.begin(), inputPorts.end(), inputPort);
+    auto outputIt = std::find(outputPorts.begin(), outputPorts.end(), outputPort);
+
+    if (inputIt == inputPorts.end() || outputIt == outputPorts.end()) {
+        return false;
+    }
+
+    int inputIndex = std::distance(inputPorts.begin(), inputIt);
+    int outputIndex = std::distance(outputPorts.begin(), outputIt);
+
+    if (inputIndex != outputIndex) {
+        return false;
+    }
+
+    // 获取场景和 Blueprint 视图
+    QGraphicsScene* currentScene = scene();
+    QBlueprint* blueprintView = dynamic_cast<QBlueprint*>(currentScene->views().first());
+
+    if (blueprintView) {
+        qDebug() << "sadas" <<blueprintView->isEventPortConnected(outputPort, inputPort);
+        return blueprintView->isEventPortConnected(outputPort, inputPort);
+    }
+
+    return false;
+}
+
+
+
+
+
+
 
 
 

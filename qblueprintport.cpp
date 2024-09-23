@@ -125,41 +125,88 @@ void QBlueprintPort::removeConnections()
     }
 }
 
-void QBlueprintPort::sendDataToConnectedPorts(const QString& data)
-{
-    // 检查当前场景是否存在
+void QBlueprintPort::sendDataToConnectedPorts() {
+    // 获取当前场景
     QGraphicsScene *currentScene = this->scene();
-    if (!currentScene) return;  // 如果场景不存在，直接返回
-    currentScene->update();
+    if (!currentScene) return;
+
+    // 获取 QBlueprint 视图
     QBlueprint *blueprintView = dynamic_cast<QBlueprint*>(currentScene->views().first());
 
-    if (blueprintView)
-    {
-        // 遍历所有连接，找到与当前端口相连的 input 端口
-        for (QBlueprintConnection *connection : blueprintView->connections)
-        {
-            if (connection->startPort() == this && connection->endPort()->portType() == QBlueprintPort::Input)
-            {
-                QBlueprintPort* inputPort = connection->endPort();
-                qDebug() << "yes";
-                inputPort->receiveData(data);  // 传递数据到 input 端口
+    if (blueprintView) {
+        // 遍历所有连接，找到与当前端口相连的端口
+        for (QBlueprintConnection *connection : blueprintView->connections) {
+            if (connection->startPort() == this) {
+                QBlueprintPort* targetPort = connection->endPort();
+                if (targetPort) {
+                    QVariant convertedVar;
+                    switch (targetPort->portDataType()) {
+                    case DataType::INT:
+                        convertedVar = QVariant::fromValue(var.toInt());  // 转换为 int 类型
+                        break;
+                    case DataType::FLOAT:
+                        convertedVar = QVariant::fromValue(var.toFloat());  // 转换为 float 类型
+                        break;
+                    case DataType::DOUBLE:
+                        convertedVar = QVariant::fromValue(var.toDouble());  // 转换为 double 类型
+                        break;
+                    case DataType::STRING:
+                        convertedVar = QVariant::fromValue(var.toString());  // 转换为 QString 类型
+                        break;
+                    case DataType::BOOL:
+                        convertedVar = QVariant::fromValue(var.toBool());  // 转换为 bool 类型
+                        break;
+                    case DataType::LONG:
+                        convertedVar = QVariant::fromValue(var.toLongLong());  // 转换为 long 类型
+                        break;
+                    case DataType::SHORT:
+                        convertedVar = QVariant::fromValue(static_cast<short>(var.toInt()));  // 转换为 short 类型
+                        break;
+                    case DataType::UNSIGNED_INT:
+                        convertedVar = QVariant::fromValue(var.toUInt());  // 转换为 unsigned int 类型
+                        break;
+                    // 你可以根据需求添加其他类型转换逻辑...
+                    default:
+                        convertedVar = var;  // 如果未匹配到类型，保持原样
+                        break;
+                    }
+                    // 发送转换后的数据给 targetPort
+                    qDebug() << "Sending converted data from" << this->name() << "to" << targetPort->name();
+                    targetPort->receiveData(convertedVar);
+                    // 发送数据给 targetPort
+                    // qDebug() << "Sending data from" << this->name() << "to" << targetPort->name();
+                }
             }
         }
     }
 }
 
-void QBlueprintPort::receiveData(const QString& data)
-{
-    // 找到对应的 QLabel 并更新显示内容
-    if (parentItem())
-    {
-        QBlueprintNode* parentNode = dynamic_cast<QBlueprintNode*>(parentItem());
-        if (parentNode)
-        {
-            parentNode->updateLabelWithData(this, data);
-        }
+
+// void QBlueprintPort::receiveData(const QVariant &data) {
+//     // 更新端口的变量数据
+//     var = data;
+//     qDebug() << "有数据";
+//     // 通知父节点更新 UI 或其他逻辑
+//     QBlueprintNode* parentNode = dynamic_cast<QBlueprintNode*>(parentItem());
+//     if (parentNode) {
+//         parentNode->updateLabelWithData(this, data.toString());
+//     }
+//     sendDataToConnectedPorts();
+// }
+void QBlueprintPort::receiveData(const QVariant &data) {
+    // 更新当前端口的数据
+    setData(data);
+    qDebug() << "接收到数据:" << data;
+
+    // 通知父节点处理数据
+    QBlueprintNode* parentNode = dynamic_cast<QBlueprintNode*>(parentItem());
+    if (parentNode) {
+        parentNode->processData(this, data);  // 只处理当前端口的输入数据
     }
 }
+
+
+
 
 void QBlueprintPort::setVarType(const QVariant &value)
 {
