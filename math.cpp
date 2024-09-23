@@ -1,5 +1,7 @@
 #include "math.h"
 #include <stdlib.h>
+#include <cmath>
+
 Math::Math()
 {
 
@@ -25,19 +27,19 @@ double Math::divide(double a, double b) {
     if (b == 0) {
         return 0;
     }
-    return static_cast<double>(a) / b;
+    return a / b;
 }
 
 // 开方，注意处理负数情况
 double Math::sqrt(double a) {
-    if (a < 0) {
+    if (a <= 0) {
         return 0;
     }
-    return sqrt(static_cast<double>(a));
+    return std::sqrt(a);
 }
 
 double Math::pow(double base, double exponent)
 {
-    return pow(static_cast<double>(base), static_cast<double>(exponent));
+    return std::pow(base, exponent);
 }
 

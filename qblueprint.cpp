@@ -374,7 +374,7 @@ void QBlueprint::mouseReleaseEvent(QMouseEvent *event)
                 m_draggingPort->sendDataToConnectedPorts();
                 propagateDataFromInitialNode(m_currentConnection->startPort());
             }
-            else if ((m_currentConnection->startPort()->getVarTypeName()==targetPort->getVarTypeName())
+            else if (areTypesCompatible(m_currentConnection->startPort()->getVarTypeName(),targetPort->getVarTypeName())
                      && targetPort->portType()!=QBlueprintPort::EVENT_INPUT && targetPort->portType()!=QBlueprintPort::EVENT_OUTPUT)
             {
                 qDebug() << "Found target port:" << targetPort->name();
@@ -512,6 +512,28 @@ void QBlueprint::propagateDataFromInitialNode(QBlueprintPort* initialPort)
     {
         outputPort->sendDataToConnectedPorts();
     }
+}
+bool QBlueprint::isNumericType(const QString& type)
+{
+    return (type == "int" || type == "float" || type == "double" ||
+            type == "short" || type == "long" || type == "unsigned int");
+}
+// 类型兼容性检查函数
+bool QBlueprint::areTypesCompatible(const QString& type1, const QString& type2)
+{
+    // 如果是相同类型，直接返回 true
+    if (type1 == type2)
+        return true;
+
+    // 数值类型之间相互兼容
+    if (isNumericType(type1) && isNumericType(type2))
+        return true;
+
+    if ((type1 == "QString" && type2 == "char*") || (type1 == "char*" && type2 == "QString"))
+        return true;
+
+    // 默认情况下认为不兼容
+    return false;
 }
 
 

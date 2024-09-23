@@ -139,9 +139,42 @@ void QBlueprintPort::sendDataToConnectedPorts() {
             if (connection->startPort() == this) {
                 QBlueprintPort* targetPort = connection->endPort();
                 if (targetPort) {
+                    QVariant convertedVar;
+                    switch (targetPort->portDataType()) {
+                    case DataType::INT:
+                        convertedVar = QVariant::fromValue(var.toInt());  // 转换为 int 类型
+                        break;
+                    case DataType::FLOAT:
+                        convertedVar = QVariant::fromValue(var.toFloat());  // 转换为 float 类型
+                        break;
+                    case DataType::DOUBLE:
+                        convertedVar = QVariant::fromValue(var.toDouble());  // 转换为 double 类型
+                        break;
+                    case DataType::STRING:
+                        convertedVar = QVariant::fromValue(var.toString());  // 转换为 QString 类型
+                        break;
+                    case DataType::BOOL:
+                        convertedVar = QVariant::fromValue(var.toBool());  // 转换为 bool 类型
+                        break;
+                    case DataType::LONG:
+                        convertedVar = QVariant::fromValue(var.toLongLong());  // 转换为 long 类型
+                        break;
+                    case DataType::SHORT:
+                        convertedVar = QVariant::fromValue(static_cast<short>(var.toInt()));  // 转换为 short 类型
+                        break;
+                    case DataType::UNSIGNED_INT:
+                        convertedVar = QVariant::fromValue(var.toUInt());  // 转换为 unsigned int 类型
+                        break;
+                    // 你可以根据需求添加其他类型转换逻辑...
+                    default:
+                        convertedVar = var;  // 如果未匹配到类型，保持原样
+                        break;
+                    }
+                    // 发送转换后的数据给 targetPort
+                    qDebug() << "Sending converted data from" << this->name() << "to" << targetPort->name();
+                    targetPort->receiveData(convertedVar);
                     // 发送数据给 targetPort
-                    qDebug() << "Sending data from" << this->name() << "to" << targetPort->name();
-                    targetPort->receiveData(var);
+                    // qDebug() << "Sending data from" << this->name() << "to" << targetPort->name();
                 }
             }
         }

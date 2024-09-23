@@ -68,5 +68,7 @@ private:
 
     void addOutputNode(DataType dataType);
     void addInputNode(DataType dataType);
+    bool isNumericType(const QString &type);
+    bool areTypesCompatible(const QString &type1, const QString &type2);
 };
 

@@ -886,7 +886,6 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
                 outputPort->sendDataToConnectedPorts(); // 发送数据到连接的下一个端口
             }
         }
-
     // 处理数据的逻辑，将数据传递给 outputPort
     else
         for (QBlueprintPort* outputPort : outputPorts) {
