@@ -43,8 +43,11 @@ QBlueprintNode* QBlueprintNode::clone() const
     newNode->setNodeTitle(this->m_name);
     newNode->setClassName(this->class_name);
     newNode->setNodeType(this->nodeType);
-    newNode->addInputPort(Type::INPUT);
-    newNode->addOutputPort(Type::OUTPUT);
+    if(newNode->nodeType != Type::INPUT) // 输入节点是不需要添加事件端口的
+    {
+        newNode->addInputPort(Type::INPUT); // 添加事件端口
+        newNode->addOutputPort(Type::OUTPUT);
+    }
     // 克隆输入端口
     for (QBlueprintPort* port : this->inputPorts) {
         QBlueprintPort* clonedPort = port->clone(); // 假设 QBlueprintPort 有一个 clone 方法
@@ -841,22 +844,63 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
     if (it != inputPorts.end()) {
         int index = std::distance(inputPorts.begin(), it) - 1;
         if ((index < outputlabel.size()) /*&& isPortConnected(inputPort, outputPorts[index])*/) {
-            qDebug() << " jisnadasuohduoas";
             QLabel* label = outputlabel[index];
             label->setText(data.toString());  // 更新 QLabel 显示的内容
-            qDebug() << "更新 label 为:" << data.toString();
         }
     }
+    QVariant result;
+    if (m_name == "add" && class_name == "Math") {
+        // 加法操作
+        result = Math::add(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+    }
+    else if (m_name == "subtract" && class_name == "Math") {
+        // 减法操作
+        result = Math::subtract(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+
+    }
+    else if (m_name == "multiply" && class_name == "Math") {
+        // 乘法操作
+        result = Math::multiply(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+
+    }
+    else if (m_name == "divide" && class_name == "Math") {
+        // 除法操作，检查除数是否为零
+        result = Math::divide(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+
+    }
+    else if (m_name == "sqrt" && class_name == "Math") {
+        // 开方操作，只需要一个输入
+        result = Math::sqrt(inputPorts[1]->data().toDouble());
+
+    }
+    else if (m_name == "pow" && class_name == "Math") {
+        result = Math::pow(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+    }
+    else if (m_name == "deletea") {
+
+    }
+    if(inputPort->getNodeType() == Type::FUNCTION)
+        for (QBlueprintPort* outputPort : outputPorts) {
+            if (outputPort) {
+                outputPort->setVarType(result); // 更新输出端口的 var
+                outputPort->sendDataToConnectedPorts(); // 发送数据到连接的下一个端口
+            }
+        }
+
     // 处理数据的逻辑，将数据传递给 outputPort
-    for (QBlueprintPort* outputPort : outputPorts) {
-        if (outputPort && isPortConnected(inputPort, outputPort)) {
-            qDebug() << "the data:" << data;
-            outputPort->setVarType(data);  // 更新 outputPort 的数据
-            outputPort->sendDataToConnectedPorts();  // 通过 outputPort 发送数据给下一个端口
+    else
+        for (QBlueprintPort* outputPort : outputPorts) {
+            if (outputPort && isPortConnected(inputPort, outputPort)) {
+                qDebug() << "the data:" << data;
+                outputPort->setVarType(data);  // 更新 outputPort 的数据
+                outputPort->sendDataToConnectedPorts();  // 通过 outputPort 发送数据给下一个端口
+            }
         }
-    }
+
 }
 bool QBlueprintNode::isPortConnected(QBlueprintPort* inputPort, QBlueprintPort* outputPort) {
+    if(inputPort->getNodeType()==Type::FUNCTION && outputPort->getNodeType()==Type::FUNCTION)
+        return true;
     auto inputIt = std::find(inputPorts.begin(), inputPorts.end(), inputPort);
     auto outputIt = std::find(outputPorts.begin(), outputPorts.end(), outputPort);
 

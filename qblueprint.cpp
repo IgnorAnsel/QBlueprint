@@ -31,6 +31,14 @@ void QBlueprint::createBlueprintNodes() // 使用工厂方法基于函数生成�
     QBlueprintNode* qblueprint_add_node = QNodeFactory::createNodeFromFunction(this, &add,"add");
     QBlueprintNode* qblueprint_deletea_node = QNodeFactory::createNodeFromFunction(this, &deletea,"deletea");
 
+
+    // 创建 Math 相关的运算节点
+    QBlueprintNode* math_add_node = QNodeFactory::createNodeFromFunction(this, &Math::add, "add", "Math");
+    QBlueprintNode* math_subtract_node = QNodeFactory::createNodeFromFunction(this, &Math::subtract, "subtract", "Math");
+    QBlueprintNode* math_multiply_node = QNodeFactory::createNodeFromFunction(this, &Math::multiply, "multiply", "Math");
+    QBlueprintNode* math_divide_node = QNodeFactory::createNodeFromFunction(this, &Math::divide, "divide", "Math");
+    QBlueprintNode* math_sqrt_node = QNodeFactory::createNodeFromFunction(this, &Math::sqrt, "sqrt", "Math");
+    QBlueprintNode* math_pow_node = QNodeFactory::createNodeFromFunction(this, &Math::pow, "pow", "Math");
     classifyNodes();
 }
 
@@ -363,6 +371,8 @@ void QBlueprint::mouseReleaseEvent(QMouseEvent *event)
             {
                 qDebug() << "事件端口连接";
                 m_currentConnection->setEndPort(targetPort);
+                m_draggingPort->sendDataToConnectedPorts();
+                propagateDataFromInitialNode(m_currentConnection->startPort());
             }
             else if ((m_currentConnection->startPort()->getVarTypeName()==targetPort->getVarTypeName())
                      && targetPort->portType()!=QBlueprintPort::EVENT_INPUT && targetPort->portType()!=QBlueprintPort::EVENT_OUTPUT)
@@ -370,6 +380,7 @@ void QBlueprint::mouseReleaseEvent(QMouseEvent *event)
                 qDebug() << "Found target port:" << targetPort->name();
                 // 连接两个端口
                 m_currentConnection->setEndPort(targetPort);
+                m_draggingPort->sendDataToConnectedPorts();
             }
             else if(m_currentConnection->startPort()->getVarTypeName()==targetPort->getVarTypeName())
                 qDebug() << "真的吗";
@@ -488,4 +499,19 @@ bool QBlueprint::isEventPortConnected(QBlueprintPort* outputPort, QBlueprintPort
     }
     return false;
 }
+void QBlueprint::propagateDataFromInitialNode(QBlueprintPort* initialPort)
+{
+    if (!initialPort) return;
+
+    // 获取初始端口的父节点
+    QBlueprintNode* initialNode = dynamic_cast<QBlueprintNode*>(initialPort->parentItem());
+    if (!initialNode) return;
+
+    // 找到该节点的所有输出端口，并发送数据
+    for (QBlueprintPort* outputPort : initialNode->getOutputPorts())
+    {
+        outputPort->sendDataToConnectedPorts();
+    }
+}
+
 

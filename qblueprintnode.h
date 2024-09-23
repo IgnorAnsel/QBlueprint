@@ -17,6 +17,9 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsScene>
 #include <QGraphicsProxyWidget>
+
+
+#include "testclass.h"
 class QBlueprint;
 class QBlueprintNode : public QObject, public QGraphicsItem
 {
@@ -108,6 +111,11 @@ private:
     void addButtonToTopLeft();
     void adjustLineEditWidth(const QString &text);
     void adjustLabelWidth(const QString &text);
+
+
+    //
+    TestClass testClassInstance;
+
 };
 
 #endif // QBLUEPRINTNODE_H

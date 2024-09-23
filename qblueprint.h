@@ -13,7 +13,7 @@
 /****************************************************/
 // 在这里添加你的头文件
 #include "testclass.h"
-
+#include "math.h"
 
 /****************************************************/
 class QBlueprint : public QGraphicsView
@@ -36,6 +36,7 @@ public:
     void placeNodeInScene(QBlueprintNode *originalNode, const QPointF& mousePos);
     void pushVectorQBlueprintNode(QBlueprintNode* node);
     bool isEventPortConnected(QBlueprintPort *outputPort, QBlueprintPort *inputPort) const;
+    void propagateDataFromInitialNode(QBlueprintPort *initialPort);
 protected:
     void drawBackground(QPainter *painter, const QRectF &rect) override;
     void wheelEvent(QWheelEvent *event) override;

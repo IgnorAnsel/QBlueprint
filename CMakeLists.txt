@@ -27,6 +27,7 @@ set(PROJECT_SOURCES
 #        qoutputnode.h qoutputnode.cpp
         alluse.h alluse.cpp
         enterlimiter.h enterlimiter.cpp
+        math.h math.cpp
 
 )
 
