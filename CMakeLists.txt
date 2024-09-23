@@ -26,6 +26,8 @@ set(PROJECT_SOURCES
 #        qinputnode.h qinputnode.cpp
 #        qoutputnode.h qoutputnode.cpp
         alluse.h alluse.cpp
+        enterlimiter.h enterlimiter.cpp
+
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

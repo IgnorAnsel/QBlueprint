@@ -6,8 +6,6 @@
 #include <QRegularExpressionValidator>
 void setEnterLimiter(QLineEdit* lineEdit, QBlueprintPort* port);
 
-
-
 class EnterLimiter
 {
 public:
