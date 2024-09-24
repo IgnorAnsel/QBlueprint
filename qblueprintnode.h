@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <QLineEdit>
 #include <QLabel>
+#include "imagelabel.h"
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QFileDialog>
@@ -64,6 +65,7 @@ public:
     bool isPortConnected(QBlueprintPort *inputPort, QBlueprintPort *outputPort);
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
+
 private:
     void setQVariantType(QBlueprintPort* port);
     void customNodePortSort();
@@ -104,7 +106,8 @@ private:
     std::vector<QLineEdit*> lineEdits;
     std::vector<QLabel*> inputlabel;
     std::vector<QLabel*> outputlabel;
-
+    std::vector<ImageLabel*> inputImagelabel;
+    std::vector<ImageLabel*> outputImagelabel;
     void addLineEdit(QBlueprintPort* port);
     void addInputLabel(QBlueprintPort* port);
     void addOutputLabel(QBlueprintPort* outport, QBlueprintPort* inport);

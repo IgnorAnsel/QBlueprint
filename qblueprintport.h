@@ -5,8 +5,9 @@
 #include <QPainter>
 #include "alluse.h"
 class QBlueprintConnection;
-class QBlueprintPort : public QGraphicsItem
+class QBlueprintPort :  public QObject, public QGraphicsItem
 {
+    Q_OBJECT
 public:
     enum PortType { Input, Output, EVENT_OUTPUT, EVENT_INPUT};  // 定义端口类型：输入和输出
     QFont m_font;
@@ -40,11 +41,14 @@ public:
     QString getVarTypeName() const; // 获取 var 类型名称的方法
     void setData(const QVariant& data) {
         var = data;
+        emit dataUpdated(var);
     }
 
     QVariant data() const {
         return var;
     }
+signals:
+    void dataUpdated(const QVariant &data);
 protected:
     //void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 private:

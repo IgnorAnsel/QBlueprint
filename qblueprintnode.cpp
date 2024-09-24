@@ -62,27 +62,27 @@ QBlueprintNode* QBlueprintNode::clone() const
         clonedPort->setParentItem(newNode); // 设置父项为新的 QBlueprintNode
         newNode->outputPorts.push_back(clonedPort);
 
-        // 确保 LineEdit 与 OutputPort 对应
-        if (i < this->lineEdits.size()) {
-            QLineEdit* lineEdit = this->lineEdits[i];
+        // // 确保 LineEdit 与 OutputPort 对应
+        // if (i < this->lineEdits.size()) {
+        //     QLineEdit* lineEdit = this->lineEdits[i];
 
-            // 创建新的 QLineEdit 实例，复制现有的文本内容
-            QLineEdit* clonedLineEdit = new QLineEdit(lineEdit->text());
-            clonedLineEdit->setStyleSheet("QLineEdit { border: 1px solid black; border-radius: 0px; padding: 2px; }");
+        //     // 创建新的 QLineEdit 实例，复制现有的文本内容
+        //     QLineEdit* clonedLineEdit = new QLineEdit(lineEdit->text());
+        //     clonedLineEdit->setStyleSheet("QLineEdit { border: 1px solid black; border-radius: 0px; padding: 2px; }");
 
-            // 创建新的 QGraphicsProxyWidget 并将克隆的 QLineEdit 嵌入其中
-            QGraphicsProxyWidget* clonedProxy = new QGraphicsProxyWidget(newNode); // 父项是新的 QBlueprintNode
-            clonedProxy->setWidget(clonedLineEdit);  // 将新的 QLineEdit 嵌入到新的代理控件中
+        //     // 创建新的 QGraphicsProxyWidget 并将克隆的 QLineEdit 嵌入其中
+        //     QGraphicsProxyWidget* clonedProxy = new QGraphicsProxyWidget(newNode); // 父项是新的 QBlueprintNode
+        //     clonedProxy->setWidget(clonedLineEdit);  // 将新的 QLineEdit 嵌入到新的代理控件中
 
-            QPointF outputPortPos = port->pos();
-            clonedProxy->setPos(outputPortPos.x() - clonedLineEdit->width() + 210, outputPortPos.y() + 35 + i * 30);
+        //     QPointF outputPortPos = port->pos();
+        //     clonedProxy->setPos(outputPortPos.x() - clonedLineEdit->width() + 210, outputPortPos.y() + 35 + i * 30);
 
-            // 设置克隆的 QLineEdit 大小与原始的一致
-            clonedProxy->resize(QSize(60, 10));
+        //     // 设置克隆的 QLineEdit 大小与原始的一致
+        //     clonedProxy->resize(QSize(60, 10));
 
-            // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
-            newNode->lineEdits.push_back(clonedLineEdit);
-        }
+        //     // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
+        //     newNode->lineEdits.push_back(clonedLineEdit);
+        // }
     }
     // 设置克隆节点的初始位置
     newNode->setPos(this->pos());
@@ -177,7 +177,13 @@ QRectF QBlueprintNode::boundingRect() const
             nodeWidth += maxLabelWidth;
             break;
         }
-
+        case DataType::QIMAGE:
+        {
+            int maxLabelWidth = 150;
+            nodeWidth += maxLabelWidth;
+            nodeHeight += (outputPorts.size()-1) * 65;
+            break;
+        }
         default:
             break;
         }
@@ -298,9 +304,10 @@ void QBlueprintNode::addButtonToTopLeft()
                 break;
             }
             case DataType::QIMAGE:{
-                QBlueprintPort * port = addOutputPort(getEnumName(dataType));
+                QBlueprintPort * outputport = addOutputPort(getEnumName(dataType));
+                QBlueprintPort * inputport = addInputPort(getEnumName(dataType));
                 imageNodePortSort();
-                addInputLabel(port);
+                addOutputLabel(outputport,inputport);
                 break;
             }
             default:
@@ -499,15 +506,44 @@ void QBlueprintNode::customNodePortSort() {
 
 
 void QBlueprintNode::imageNodePortSort() {
-    for (size_t i = 0; i < inputPorts.size(); ++i) {
-        // 将输入端口放在左侧
-        inputPorts[i]->setPos(5, i * 115 + 35);  // 左边距
+    if(nodeType == Type::INPUT)
+    {
+        for (size_t i = 0; i < inputPorts.size(); ++i) {
+            // 将输入端口放在左侧
+            inputPorts[i]->setPos(5, i * 115 + 35);  // 左边距
+        }
+        for (size_t i = 0; i < outputPorts.size(); ++i) {
+            // 将输出端口放在右侧
+            outputPorts[i]->setPos(boundingRect().width() - 15, i * 115 + 35); // 右边距
+        }
+    }
+    else
+    {
+        int eventPortHeight = 30; // 事件端口所占高度
+        int baseHeight = eventPortHeight; // 普通端口从这个高度开始排列
+        // 首先，处理输入端口
+        for (size_t i = 0; i < inputPorts.size(); ++i) {
+            if (inputPorts[i]->portType() == QBlueprintPort::EVENT_INPUT) {
+                // 事件端口固定在顶部位置
+                inputPorts[i]->setPos(5, 40);  // 事件输入端口固定位置
+            } else {
+                // 普通输入端口从事件端口之后开始排列
+                inputPorts[i]->setPos(5, baseHeight + (i-1) * 95 + 35);  // 左边距
+            }
+        }
+
+        // 其次，处理输出端口
+        for (size_t i = 0; i < outputPorts.size(); ++i) {
+            if (outputPorts[i]->portType() == QBlueprintPort::EVENT_OUTPUT) {
+                // 事件端口固定在顶部位置
+                outputPorts[i]->setPos(boundingRect().width() - 15, 40);  // 事件输出端口固定位置
+            } else {
+                // 普通输出端口从事件端口之后开始排列
+                outputPorts[i]->setPos(boundingRect().width() - 15, baseHeight + (i-1) * 95 + 35); // 右边距
+            }
+        }
     }
 
-    for (size_t i = 0; i < outputPorts.size(); ++i) {
-        // 将输出端口放在右侧
-        outputPorts[i]->setPos(boundingRect().width() - 15, i * 115 + 35); // 右边距
-    }
 }
 
 
@@ -738,13 +774,12 @@ void QBlueprintNode::adjustLabelWidth(const QString &text) {
 
 void QBlueprintNode::addInputLabel(QBlueprintPort* port)
 {
-
     // 创建 QWidget 作为 QGraphicsProxyWidget 的容器
     QWidget* containerWidget = new QWidget();
     containerWidget->setFixedSize(150, 110); // 设置容器大小，可以调整为合适的大小
 
     // 创建 QLabel 用于显示图片
-    QLabel* pLabel = new QLabel(containerWidget); // 直接设置父对象为 containerWidget
+    ImageLabel* pLabel = new ImageLabel(containerWidget); // 直接设置父对象为 containerWidget
     pLabel->setFixedSize(150, 90); // 设置 QLabel 大小
     pLabel->setStyleSheet("QLabel { border: 1px solid black; }");
     pLabel->setAlignment(Qt::AlignCenter); // 居中显示图片
@@ -773,6 +808,15 @@ void QBlueprintNode::addInputLabel(QBlueprintPort* port)
         if (!filePath.isEmpty()) {
             QPixmap pixmap(filePath);
             pLabel->setPixmap(pixmap.scaled(pLabel->size(), Qt::KeepAspectRatio)); // 在 QLabel 中显示选中的图片
+            QImage image(filePath);
+            pLabel->setImage(image);
+            // 更新输出端口的 QVariant 数据为 QImage
+            port->setVarType(QVariant::fromValue(image));
+
+            // 将数据发送给所有连接的端口
+            port->sendDataToConnectedPorts();
+
+            qDebug() << "Sending converted data from QImage to connected ports.";
         }
     });
 
@@ -783,8 +827,14 @@ void QBlueprintNode::addInputLabel(QBlueprintPort* port)
 
 void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inport)
 {
-    // 创建 QLineEdit
-    QLabel* pLabel = new QLabel("");
+    QLabel* pLabel = nullptr; // 声明基类指针
+
+    // 根据端口数据类型选择合适的 QLabel 类型
+    if(outport->portDataType() == DataType::QIMAGE) {
+        pLabel = new ImageLabel();  // 如果是 QIMAGE 类型，创建 ImageLabel 实例
+    } else {
+        pLabel = new QLabel("");
+    }
     pLabel->setStyleSheet("QLineEdit { border: 1px solid black; border-radius: 0px; padding: 2px; }");
 
     // 创建 QGraphicsProxyWidget 并将 QLineEdit 添加到该代理
@@ -799,9 +849,23 @@ void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inp
     QFontMetrics fontMetrics(inport->m_font);
     int outputTextWidth = fontMetrics.horizontalAdvance(inport->name());
     pMyProxy->setPos(outputPortPos.x() + outputTextWidth + 30, outputPortPos.y() - 3);
-
+    if (outport->portDataType() == DataType::QIMAGE){
+        pMyProxy->resize(QSize(150, 90));
+        connect(outport, &QBlueprintPort::dataUpdated, [pLabel](const QVariant &data) {
+            if (data.canConvert<QImage>()) {
+                QImage image = data.value<QImage>();
+                if (!image.isNull()) {
+                    // 转换 QImage 为 QPixmap，并按比例缩放到 QLabel 的大小
+                    pLabel->setPixmap(QPixmap::fromImage(image).scaled(pLabel->size(), Qt::KeepAspectRatio));
+                } else {
+                    pLabel->setText("Invalid Image");
+                }
+            }
+        });
+    }
     // 设置克隆的 QLineEdit 大小与原始的一致
-    pMyProxy->resize(QSize(100, 20));
+    else
+        pMyProxy->resize(QSize(100, 20));
 
     // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
     outputlabel.push_back(pLabel);
@@ -845,7 +909,17 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
         int index = std::distance(inputPorts.begin(), it) - 1;
         if ((index < outputlabel.size()) /*&& isPortConnected(inputPort, outputPorts[index])*/) {
             QLabel* label = outputlabel[index];
-            label->setText(data.toString());  // 更新 QLabel 显示的内容
+            if (inputPort->portDataType() == DataType::QIMAGE && data.canConvert<QImage>()) {
+                // 将 QVariant 数据转换为 QImage
+                QImage image = data.value<QImage>();
+                ImageLabel* imageLabel = dynamic_cast<ImageLabel*>(label); // 转化为ImageLabel
+                // 将 QImage 转换为 QPixmap 并设置到 QLabel
+                imageLabel->setImage(image);
+                imageLabel->setPixmap(QPixmap::fromImage(image).scaled(label->size(), Qt::KeepAspectRatio));
+            } else {
+                // 更新 QLabel 显示的其他数据内容
+                label->setText(data.toString());  // 更新 QLabel 显示的文本内容
+            }
         }
     }
     QVariant result;
