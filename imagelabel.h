@@ -1,3 +1,4 @@
+// 修改后的 ImageLabel.h
 #ifndef IMAGELABEL_H
 #define IMAGELABEL_H
 
@@ -15,8 +16,15 @@ class ImageLabel : public QLabel {
 public:
     explicit ImageLabel(QWidget* parent = nullptr)
         : QLabel(parent), imageDialog(nullptr) {
-
+        setAlignment(Qt::AlignCenter);
         createButton();
+    }
+
+    // 设置原始的 QImage，并更新显示
+    void setImage(const QImage& img) {
+        originalImage = img;  // 保存原始图像
+        QPixmap pixmap = QPixmap::fromImage(originalImage);  // 将 QImage 转换为 QPixmap
+        this->setPixmap(pixmap.scaled(this->size(), Qt::KeepAspectRatio));  // 显示缩放后的图像
     }
 
 protected:
@@ -37,8 +45,15 @@ private slots:
             imageDialog = new QDialog();
             imageDialog->setWindowFlags(Qt::Popup);
 
-            QLabel* enlargedLabel = new QLabel();
-            enlargedLabel->setPixmap(pixmap().scaled(400, 400, Qt::KeepAspectRatio));
+            QLabel* enlargedLabel = new QLabel(imageDialog);
+
+            // 检查 originalImage 是否为空，确保图像已正确传递
+            if (!originalImage.isNull()) {
+                enlargedLabel->setPixmap(QPixmap::fromImage(originalImage).scaled(400, 400, Qt::KeepAspectRatio));
+            } else {
+                // 提示没有图像
+                enlargedLabel->setText("No image available");
+            }
 
             QPushButton* closeButton = new QPushButton("X", imageDialog);
             closeButton->setFixedSize(30, 30);
@@ -68,6 +83,7 @@ private slots:
             imageDialog->show();
         }
     }
+
 public:
     void setOpenButtonPos(QPointF buttonPos)
     {
@@ -76,6 +92,7 @@ public:
 private:
     QPushButton* openButton;    // 控制打开/关闭的按钮
     QDialog* imageDialog;       // 用于显示放大图像的对话框
+    QImage originalImage;       // 原始 QImage
 
     void createButton() {
         // 在 QLabel 的左上角创建一个按钮
@@ -87,11 +104,5 @@ private:
         connect(openButton, &QPushButton::clicked, this, &ImageLabel::toggleImageDialog);
     }
 };
-
-
-
-
-
-
 
 #endif // IMAGELABEL_H

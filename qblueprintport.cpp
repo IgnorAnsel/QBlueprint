@@ -165,6 +165,12 @@ void QBlueprintPort::sendDataToConnectedPorts() {
                     case DataType::UNSIGNED_INT:
                         convertedVar = QVariant::fromValue(var.toUInt());  // 转换为 unsigned int 类型
                         break;
+                    case DataType::QIMAGE:
+                        if (var.canConvert<QImage>()) {
+                            QImage image = var.value<QImage>();  // 获取 QImage 对象
+                            convertedVar = QVariant::fromValue(image);  // 将 QImage 转换为 QVariant 并存储
+                        }
+                        break;
                     // 你可以根据需求添加其他类型转换逻辑...
                     default:
                         convertedVar = var;  // 如果未匹配到类型，保持原样

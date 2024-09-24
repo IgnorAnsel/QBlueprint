@@ -809,7 +809,7 @@ void QBlueprintNode::addInputLabel(QBlueprintPort* port)
             QPixmap pixmap(filePath);
             pLabel->setPixmap(pixmap.scaled(pLabel->size(), Qt::KeepAspectRatio)); // 在 QLabel 中显示选中的图片
             QImage image(filePath);
-
+            pLabel->setImage(image);
             // 更新输出端口的 QVariant 数据为 QImage
             port->setVarType(QVariant::fromValue(image));
 
@@ -831,9 +831,7 @@ void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inp
 
     // 根据端口数据类型选择合适的 QLabel 类型
     if(outport->portDataType() == DataType::QIMAGE) {
-        ImageLabel* imageLabel = new ImageLabel();  // 如果是 QIMAGE 类型，创建 ImageLabel 实例
-        pLabel = imageLabel;
-        imageLabel->setOpenButtonPos(QPointF(115,0)); // 设置放大的位置在右上角
+        pLabel = new ImageLabel();  // 如果是 QIMAGE 类型，创建 ImageLabel 实例
     } else {
         pLabel = new QLabel("");
     }
@@ -854,7 +852,6 @@ void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inp
     if (outport->portDataType() == DataType::QIMAGE){
         pMyProxy->resize(QSize(150, 90));
         connect(outport, &QBlueprintPort::dataUpdated, [pLabel](const QVariant &data) {
-            qDebug() << "阿斯顿0";
             if (data.canConvert<QImage>()) {
                 QImage image = data.value<QImage>();
                 if (!image.isNull()) {
@@ -915,8 +912,10 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
             if (inputPort->portDataType() == DataType::QIMAGE && data.canConvert<QImage>()) {
                 // 将 QVariant 数据转换为 QImage
                 QImage image = data.value<QImage>();
+                ImageLabel* imageLabel = dynamic_cast<ImageLabel*>(label); // 转化为ImageLabel
                 // 将 QImage 转换为 QPixmap 并设置到 QLabel
-                label->setPixmap(QPixmap::fromImage(image).scaled(label->size(), Qt::KeepAspectRatio));
+                imageLabel->setImage(image);
+                imageLabel->setPixmap(QPixmap::fromImage(image).scaled(label->size(), Qt::KeepAspectRatio));
             } else {
                 // 更新 QLabel 显示的其他数据内容
                 label->setText(data.toString());  // 更新 QLabel 显示的文本内容
