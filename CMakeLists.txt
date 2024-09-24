@@ -28,8 +28,7 @@ set(PROJECT_SOURCES
         alluse.h alluse.cpp
         enterlimiter.h enterlimiter.cpp
         math.h math.cpp
-
-
+        imagelabel.h imagelabel.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
