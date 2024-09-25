@@ -94,7 +94,8 @@ private:
             return "double";
         else if (std::is_same<T, QString>::value)
             return "QString";
-        // 这里可以根据需要扩展更多的类型
+        else if (std::is_same<T, QImage>::value)  // 添加对 QImage 的支持
+            return "QImage";
         else
             return "unknown";
     }

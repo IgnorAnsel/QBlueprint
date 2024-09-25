@@ -200,16 +200,24 @@ void QBlueprintPort::sendDataToConnectedPorts() {
 //     sendDataToConnectedPorts();
 // }
 void QBlueprintPort::receiveData(const QVariant &data) {
-    // 更新当前端口的数据
+    if (data.canConvert<QImage>()) {
+        QImage image = data.value<QImage>();
+        if (!image.isNull()) {
+            qDebug() << "Received valid QImage data of size:" << image.size();
+        } else {
+            qWarning() << "Received QImage but it is null.";
+        }
+    } else {
+        qWarning() << "Invalid data received: " << data;
+    }
     setData(data);
-    qDebug() << "接收到数据:" << data;
-
     // 通知父节点处理数据
     QBlueprintNode* parentNode = dynamic_cast<QBlueprintNode*>(parentItem());
     if (parentNode) {
-        parentNode->processData(this, data);  // 只处理当前端口的输入数据
+        parentNode->processData(this, data);
     }
 }
+
 
 
 

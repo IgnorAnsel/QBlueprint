@@ -902,7 +902,6 @@ void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& da
 void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data) {
     // 根据 inputPort 来判断需要处理的逻辑
     qDebug() << "节点" << m_name << "接收到数据:" << data << "从端口:" << inputPort->name();
-
     // 如果有对应的 QLabel 需要更新（例如在 inputPort 上有 QLabel）
     auto it = std::find(inputPorts.begin(), inputPorts.end(), inputPort);
     if (it != inputPorts.end()) {
@@ -923,36 +922,10 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
         }
     }
     QVariant result;
-    if (m_name == "add" && class_name == "Math") {
-        // 加法操作
-        result = Math::add(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
-    }
-    else if (m_name == "subtract" && class_name == "Math") {
-        // 减法操作
-        result = Math::subtract(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
-
-    }
-    else if (m_name == "multiply" && class_name == "Math") {
-        // 乘法操作
-        result = Math::multiply(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
-
-    }
-    else if (m_name == "divide" && class_name == "Math") {
-        // 除法操作，检查除数是否为零
-        result = Math::divide(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
-
-    }
-    else if (m_name == "sqrt" && class_name == "Math") {
-        // 开方操作，只需要一个输入
-        result = Math::sqrt(inputPorts[1]->data().toDouble());
-
-    }
-    else if (m_name == "pow" && class_name == "Math") {
-        result = Math::pow(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
-    }
-    else if (m_name == "deletea") {
-
-    }
+    if(class_name == "Math")
+        result = mathFunctions();
+    else if(class_name == "opencv")
+        result = opencvFunctions();
     if(inputPort->getNodeType() == Type::FUNCTION)
         for (QBlueprintPort* outputPort : outputPorts) {
             if (outputPort) {
@@ -996,12 +969,60 @@ bool QBlueprintNode::isPortConnected(QBlueprintPort* inputPort, QBlueprintPort* 
         qDebug() << "sadas" <<blueprintView->isEventPortConnected(outputPort, inputPort);
         return blueprintView->isEventPortConnected(outputPort, inputPort);
     }
-
     return false;
 }
 
+QVariant QBlueprintNode::mathFunctions()
+{
+    QVariant result;
+    if (m_name == "add" && class_name == "Math") {
+        // 加法操作
+        result = Math::add(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+    }
+    else if (m_name == "subtract" && class_name == "Math") {
+        // 减法操作
+        result = Math::subtract(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
 
+    }
+    else if (m_name == "multiply" && class_name == "Math") {
+        // 乘法操作
+        result = Math::multiply(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
 
+    }
+    else if (m_name == "divide" && class_name == "Math") {
+        // 除法操作，检查除数是否为零
+        result = Math::divide(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+
+    }
+    else if (m_name == "sqrt" && class_name == "Math") {
+        // 开方操作，只需要一个输入
+        result = Math::sqrt(inputPorts[1]->data().toDouble());
+
+    }
+    else if (m_name == "pow" && class_name == "Math") {
+        result = Math::pow(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
+    }
+    else if (m_name == "deletea") {
+
+    }
+    return result;
+}
+#ifdef OPENCV_FOUND
+QVariant QBlueprintNode::opencvFunctions()
+{
+    QVariant result;
+    if(m_name == "threshold")
+        result = opencv::threshold(inputPorts[1]->data().value<QImage>(),
+                                   inputPorts[2]->data().toDouble(),
+                                   inputPorts[3]->data().toDouble(),
+                                   inputPorts[4]->data().toInt());
+    else if(m_name == "convertToGray")
+    {
+        result = opencv::convertToGray(inputPorts[1]->data().value<QImage>());
+    }
+    return result;
+}
+#endif
 
 
 

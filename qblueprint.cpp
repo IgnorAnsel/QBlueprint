@@ -6,8 +6,10 @@ QBlueprint::QBlueprint(QWidget *parent)
     : QGraphicsView(parent), scene(new QGraphicsScene(this))  // 初始化场景
 {
     // 设置场景的范围，可以根据需要调整
-    scene->setSceneRect(0, 0, 2000, 2000);
-
+    scene->setSceneRect(0, 0, 8000, 8000);
+#ifdef OPENCV_FOUND
+    qDebug() << "yes";
+#endif
     // 将场景设置为QGraphicsView的场景
     setScene(scene);
 
@@ -39,6 +41,11 @@ void QBlueprint::createBlueprintNodes() // 使用工厂方法基于函数生成�
     QBlueprintNode* math_divide_node = QNodeFactory::createNodeFromFunction(this, &Math::divide, "divide", "Math");
     QBlueprintNode* math_sqrt_node = QNodeFactory::createNodeFromFunction(this, &Math::sqrt, "sqrt", "Math");
     QBlueprintNode* math_pow_node = QNodeFactory::createNodeFromFunction(this, &Math::pow, "pow", "Math");
+
+#ifdef OPENCV_FOUND
+    QBlueprintNode* opencv_threshold_node = QNodeFactory::createNodeFromFunction(this, &opencv::threshold, "threshold", "opencv");
+    QBlueprintNode* opencv_convertToGray_node = QNodeFactory::createNodeFromFunction(this, &opencv::convertToGray, "convertToGray", "opencv");
+#endif
     classifyNodes();
 }
 
@@ -529,6 +536,7 @@ bool QBlueprint::areTypesCompatible(const QString& type1, const QString& type2)
     if (isNumericType(type1) && isNumericType(type2))
         return true;
 
+    // QString 和 char* 之间相互兼容
     if ((type1 == "QString" && type2 == "char*") || (type1 == "char*" && type2 == "QString"))
         return true;
 
