@@ -29,6 +29,7 @@ set(PROJECT_SOURCES
         enterlimiter.h enterlimiter.cpp
         math.h math.cpp
         imagelabel.h imagelabel.cpp
+        opencv.h opencv.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

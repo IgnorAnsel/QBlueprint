@@ -119,6 +119,9 @@ private:
     //
     TestClass testClassInstance;
 
+    QVariant mathFunctions();
+    QVariant opencvFunctions();
+
 };
 
 #endif // QBLUEPRINTNODE_H

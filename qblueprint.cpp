@@ -41,6 +41,11 @@ void QBlueprint::createBlueprintNodes() // 使用工厂方法基于函数生成�
     QBlueprintNode* math_divide_node = QNodeFactory::createNodeFromFunction(this, &Math::divide, "divide", "Math");
     QBlueprintNode* math_sqrt_node = QNodeFactory::createNodeFromFunction(this, &Math::sqrt, "sqrt", "Math");
     QBlueprintNode* math_pow_node = QNodeFactory::createNodeFromFunction(this, &Math::pow, "pow", "Math");
+
+#ifdef OPENCV_FOUND
+    QBlueprintNode* opencv_threshold_node = QNodeFactory::createNodeFromFunction(this, &opencv::threshold, "threshold", "opencv");
+    QBlueprintNode* opencv_convertToGray_node = QNodeFactory::createNodeFromFunction(this, &opencv::convertToGray, "convertToGray", "opencv");
+#endif
     classifyNodes();
 }
 
@@ -531,6 +536,7 @@ bool QBlueprint::areTypesCompatible(const QString& type1, const QString& type2)
     if (isNumericType(type1) && isNumericType(type2))
         return true;
 
+    // QString 和 char* 之间相互兼容
     if ((type1 == "QString" && type2 == "char*") || (type1 == "char*" && type2 == "QString"))
         return true;
 
