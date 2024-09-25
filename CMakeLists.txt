@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
-
+find_package(OpenCV QUIET)
 set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp
@@ -57,7 +57,10 @@ else()
 endif()
 
 target_link_libraries(QBlueprint PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
-
+if(OpenCV_FOUND)
+    target_link_libraries(QBlueprint PRIVATE ${OpenCV_LIBS})
+    target_compile_definitions(QBlueprint PRIVATE OPENCV_FOUND)
+endif()
 set_target_properties(QBlueprint PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}

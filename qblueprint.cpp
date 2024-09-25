@@ -6,8 +6,10 @@ QBlueprint::QBlueprint(QWidget *parent)
     : QGraphicsView(parent), scene(new QGraphicsScene(this))  // 初始化场景
 {
     // 设置场景的范围，可以根据需要调整
-    scene->setSceneRect(0, 0, 2000, 2000);
-
+    scene->setSceneRect(0, 0, 8000, 8000);
+#ifdef OPENCV_FOUND
+    qDebug() << "yes";
+#endif
     // 将场景设置为QGraphicsView的场景
     setScene(scene);
 
