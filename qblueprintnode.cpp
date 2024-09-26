@@ -924,8 +924,10 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
     QVariant result;
     if(class_name == "Math")
         result = mathFunctions();
+#ifdef OPENCV_FOUND
     else if(class_name == "opencv")
         result = opencvFunctions();
+#endif
     if(inputPort->getNodeType() == Type::FUNCTION)
         for (QBlueprintPort* outputPort : outputPorts) {
             if (outputPort) {
