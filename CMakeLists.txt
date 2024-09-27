@@ -30,6 +30,7 @@ set(PROJECT_SOURCES
         math.h math.cpp
         imagelabel.h imagelabel.cpp
         opencv.h opencv.cpp
+        qts.h qts.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -38,6 +39,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         enterlimiter.h enterlimiter.cpp
         imagelabel.h imagelabel.cpp
+        qts.h qts.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET QBlueprint APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

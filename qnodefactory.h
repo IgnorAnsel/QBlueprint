@@ -81,7 +81,6 @@ private:
         node->addOutputPort(getTypeName<Ret>());
     }
 
-
     // 获取类型名称的辅助函数（简单示例，可以扩展以支持更多类型）
     template <typename T>
     static QString getTypeName()
@@ -96,6 +95,10 @@ private:
             return "QString";
         else if (std::is_same<T, QImage>::value)  // 添加对 QImage 的支持
             return "QImage";
+        else if (std::is_same<T, QPoint>::value)
+            return "QPoint";
+        else if (std::is_same<T, QPointF>::value)
+            return "QPointF";
         else
             return "unknown";
     }

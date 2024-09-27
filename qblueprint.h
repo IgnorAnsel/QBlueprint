@@ -14,6 +14,7 @@
 // 在这里添加你的头文件
 #include "testclass.h"
 #include "math.h"
+#include "qts.h"
 #ifdef OPENCV_FOUND
 #include "opencv.h"
 #endif
