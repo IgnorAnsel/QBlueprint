@@ -43,7 +43,11 @@ void QBlueprint::createBlueprintNodes() // 使用工厂方法基于函数生成�
     QBlueprintNode* math_pow_node = QNodeFactory::createNodeFromFunction(this, &Math::pow, "pow", "Math");
     // 创建 Qt 一些难以实现的(QPoint...)
     QBlueprintNode* qts_setpointf_node = QNodeFactory::createNodeFromFunction(this, &Qts::setQPointF, "setQPointF", "Qts");
-    QBlueprintNode* qts_getpointf_node = QNodeFactory::createNodeFromFunction(this, &Qts::getQPointF, "getQPointF", "Qts");
+    QBlueprintNode* qts_setpoint_node = QNodeFactory::createNodeFromFunction(this, &Qts::setQPoint, "setQPoint", "Qts");
+    QBlueprintNode* qts_getpointf_x_node = QNodeFactory::createNodeFromFunction(this, &Qts::getQPointF_X, "getQPointF_X", "Qts");
+    QBlueprintNode* qts_getpointf_y_node = QNodeFactory::createNodeFromFunction(this, &Qts::getQPointF_Y, "getQPointF_Y", "Qts");
+    QBlueprintNode* qts_getpoint_x_node = QNodeFactory::createNodeFromFunction(this, &Qts::getQPoint_X, "getQPoint_X", "Qts");
+    QBlueprintNode* qts_getpoint_y_node = QNodeFactory::createNodeFromFunction(this, &Qts::getQPoint_Y, "getQPoint_Y", "Qts");
 
 #ifdef OPENCV_FOUND
     QBlueprintNode* opencv_threshold_node = QNodeFactory::createNodeFromFunction(this, &opencv::threshold, "threshold", "opencv");

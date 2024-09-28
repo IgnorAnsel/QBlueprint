@@ -13,7 +13,6 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     setFlag(QGraphicsItem::ItemIsMovable, true);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
     setFlag(QGraphicsItem::ItemAcceptsInputMethod, true);
-    initInputOrOutput(Type,datatype);
     setZValue(1);
     dataType = datatype;
     qDebug() << ":" << dataType;
@@ -34,7 +33,6 @@ QBlueprintNode::~QBlueprintNode()
     {
         port->removeConnections();
     }
-    cleanData();
 }
 QBlueprintNode* QBlueprintNode::clone() const
 {
@@ -61,28 +59,6 @@ QBlueprintNode* QBlueprintNode::clone() const
         QBlueprintPort* clonedPort = port->clone(); // 假设 QBlueprintPort 有一个 clone 方法
         clonedPort->setParentItem(newNode); // 设置父项为新的 QBlueprintNode
         newNode->outputPorts.push_back(clonedPort);
-
-        // // 确保 LineEdit 与 OutputPort 对应
-        // if (i < this->lineEdits.size()) {
-        //     QLineEdit* lineEdit = this->lineEdits[i];
-
-        //     // 创建新的 QLineEdit 实例，复制现有的文本内容
-        //     QLineEdit* clonedLineEdit = new QLineEdit(lineEdit->text());
-        //     clonedLineEdit->setStyleSheet("QLineEdit { border: 1px solid black; border-radius: 0px; padding: 2px; }");
-
-        //     // 创建新的 QGraphicsProxyWidget 并将克隆的 QLineEdit 嵌入其中
-        //     QGraphicsProxyWidget* clonedProxy = new QGraphicsProxyWidget(newNode); // 父项是新的 QBlueprintNode
-        //     clonedProxy->setWidget(clonedLineEdit);  // 将新的 QLineEdit 嵌入到新的代理控件中
-
-        //     QPointF outputPortPos = port->pos();
-        //     clonedProxy->setPos(outputPortPos.x() - clonedLineEdit->width() + 210, outputPortPos.y() + 35 + i * 30);
-
-        //     // 设置克隆的 QLineEdit 大小与原始的一致
-        //     clonedProxy->resize(QSize(60, 10));
-
-        //     // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
-        //     newNode->lineEdits.push_back(clonedLineEdit);
-        // }
     }
     // 设置克隆节点的初始位置
     newNode->setPos(this->pos());
@@ -546,139 +522,6 @@ void QBlueprintNode::imageNodePortSort() {
 
 }
 
-
-void QBlueprintNode::initInputOrOutput(enum Type Type, DataType datatype)
-{
-    if(Type == Type::INPUT)
-    {
-        switch(datatype){
-        case DataType::INT:
-            break;
-        }
-    }
-    else if(Type == Type::OUTPUT)
-    {
-        switch(datatype){
-        case DataType::INT:
-            break;
-        case FOR_FUNCTION:
-        case FLOAT:
-        case DOUBLE:
-        case CHAR:
-        case STRING:
-        case BOOL:
-        case LONG:
-        case SHORT:
-        case UNSIGNED_INT:
-        case VARIANT:
-        case QSTRING:
-        case QTIME:
-        case QPOINT:
-        case QPOINTF:
-        case QSIZE:
-        case QSIZEF:
-        case QRECT:
-        case QRECTF:
-        case QCOLOR:
-        case QPIXMAP:
-        case QIMAGE:
-            break;
-        }
-    }
-}
-// enum DataType {
-//     FOR_FUNCTION,          // 为FUNCTION使用
-//     INT,           // 整型
-//     FLOAT,         // 单精度浮点型
-//     DOUBLE,        // 双精度浮点型
-//     CHAR,          // 字符型
-//     STRING,        // 字符串型
-//     BOOL,          // 布尔型
-//     LONG,          // 长整型
-//     SHORT,         // 短整型
-//     UNSIGNED_INT,  // 无符号整型
-//     VARIANT,       // QVariant 类型 (Qt通用类型)
-//     QSTRING,       // QString 类型 (Qt字符串类型)
-//     QDATE,         // QDate 类型 (Qt日期类型)
-//     QDATETIME,     // QDateTime 类型 (Qt日期时间类型)
-//     QTIME,         // QTime 类型 (Qt时间类型)
-//     QPOINT,        // QPoint 类型 (Qt坐标点类型)
-//     QPOINTF,       // QPointF 类型 (Qt浮点坐标点类型)
-//     QSIZE,         // QSize 类型 (Qt尺寸类型)
-//     QSIZEF,        // QSizeF 类型 (Qt浮点尺寸类型)
-//     QRECT,         // QRect 类型 (Qt矩形类型)
-//     QRECTF,        // QRectF 类型 (Qt浮点矩形类型)
-//     QCOLOR,        // QColor 类型 (Qt颜色类型)
-//     QPIXMAP,       // QPixmap 类型 (Qt图像类型)
-//     QIMAGE,        // QImage 类型 (Qt图像类型)
-//     QPEN,          // QPen 类型 (Qt画笔类型)
-//     QBRUSH,        // QBrush 类型 (Qt画刷类型)
-//     QFONT          // QFont 类型 (Qt字体类型)
-// };
-void QBlueprintNode::initData(DataType datatype)
-{
-    switch(datatype){
-    case DataType::INT:
-        intData = new std::vector<int>();
-        break;
-    case DataType::FLOAT:
-        floatData = new std::vector<float>();
-        break;
-    case DataType::DOUBLE:
-        doubleData = new std::vector<double>();
-        break;
-    case DataType::CHAR:
-        charData = new std::vector<char>();
-        break;
-    case DataType::STRING:
-        stringData = new std::vector<std::string>();
-        break;
-    case DataType::BOOL:
-        boolData = new std::vector<bool>();
-        break;
-    case DataType::LONG:
-        longData = new std::vector<long>();
-        break;
-    case DataType::SHORT:
-        shortData = new std::vector<short>();
-        break;
-    case DataType::UNSIGNED_INT:
-        unsignedIntData = new std::vector<unsigned int>();
-        break;
-    case DataType::VARIANT:
-        variantData = new std::vector<QVariant>();
-        break;
-    case DataType::QSTRING:
-        qStringData = new std::vector<QString>();
-        break;
-    // case :
-    //     = new std::vector<>();
-    //     break;
-    // case :
-    //     = new std::vector<>();
-    //     break;
-    // case :
-    //     = new std::vector<>();
-    //     break;
-    // case :
-    //     = new std::vector<>();
-    //     break;
-    default:
-        qDebug() << "unkown type:" << datatype;
-    }
-}
-
-void QBlueprintNode::cleanData()
-{
-    switch (dataType) {
-    case DataType::INT:
-        delete intData;
-        break;
-    default:
-        break;
-    }
-}
-
 void QBlueprintNode::addLineEdit(QBlueprintPort* port)
 {
     // 创建 QLineEdit
@@ -722,6 +565,9 @@ void QBlueprintNode::addLineEdit(QBlueprintPort* port)
             break;
         case DataType::QSTRING:
             convertedValue = QVariant::fromValue(text);
+            break;
+        case DataType::QPOINT:
+            qDebug() << "neddthis ------";
             break;
         // 添加其他类型的处理逻辑
         default:
@@ -871,21 +717,6 @@ void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inp
     outputlabel.push_back(pLabel);
 }
 
-// void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& data) {
-//     // 遍历 inputPorts 查找 port 的索引
-//     auto it = std::find(inputPorts.begin(), inputPorts.end(), port);
-//     if (it != inputPorts.end()) {
-//         // 计算索引
-//         int index = std::distance(inputPorts.begin(), it);
-
-//         // 确保索引在 outputlabel 范围内
-//         if (index < outputlabel.size()) {
-//             QLabel* label = outputlabel[index];
-//             label->setText(data);  // 更新 QLabel 显示的数据
-//         }
-//     }
-// }
-
 void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& data) {
     auto it = std::find(inputPorts.begin(), inputPorts.end(), port);
     if (it != inputPorts.end()) {
@@ -928,6 +759,8 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
     else if(class_name == "opencv")
         result = opencvFunctions();
 #endif
+    else if(class_name == "Qts")
+        result = qtsFunctions();
     if(inputPort->getNodeType() == Type::FUNCTION)
         for (QBlueprintPort* outputPort : outputPorts) {
             if (outputPort) {
@@ -977,31 +810,31 @@ bool QBlueprintNode::isPortConnected(QBlueprintPort* inputPort, QBlueprintPort* 
 QVariant QBlueprintNode::mathFunctions()
 {
     QVariant result;
-    if (m_name == "add" && class_name == "Math") {
+    if (m_name == "add" ) {
         // 加法操作
         result = Math::add(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
     }
-    else if (m_name == "subtract" && class_name == "Math") {
+    else if (m_name == "subtract" ) {
         // 减法操作
         result = Math::subtract(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
 
     }
-    else if (m_name == "multiply" && class_name == "Math") {
+    else if (m_name == "multiply" ) {
         // 乘法操作
         result = Math::multiply(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
 
     }
-    else if (m_name == "divide" && class_name == "Math") {
+    else if (m_name == "divide" ) {
         // 除法操作，检查除数是否为零
         result = Math::divide(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
 
     }
-    else if (m_name == "sqrt" && class_name == "Math") {
+    else if (m_name == "sqrt" ) {
         // 开方操作，只需要一个输入
         result = Math::sqrt(inputPorts[1]->data().toDouble());
 
     }
-    else if (m_name == "pow" && class_name == "Math") {
+    else if (m_name == "pow") {
         result = Math::pow(inputPorts[1]->data().toDouble(),inputPorts[2]->data().toDouble());
     }
     else if (m_name == "deletea") {
@@ -1009,6 +842,34 @@ QVariant QBlueprintNode::mathFunctions()
     }
     return result;
 }
+
+QVariant QBlueprintNode::qtsFunctions()
+{
+    QVariant result;
+
+    if (m_name == "setQPointF") {
+        result = Qts::setQPointF(inputPorts[1]->data().toDouble(),
+                                 inputPorts[2]->data().toDouble());
+    } else if (m_name == "setQPoint") {
+        result = Qts::setQPoint(inputPorts[1]->data().toInt(),
+                                inputPorts[2]->data().toInt());
+    } else if (m_name == "getQPointF_X") {
+        QPointF point = inputPorts[1]->data().value<QPointF>();
+        result = Qts::getQPointF_X(point);
+    } else if (m_name == "getQPointF_Y") {
+        QPointF point = inputPorts[1]->data().value<QPointF>();
+        result = Qts::getQPointF_Y(point);
+    } else if (m_name == "getQPoint_X") {
+        QPoint point = inputPorts[1]->data().value<QPoint>();
+        result = Qts::getQPoint_X(point);
+    } else if (m_name == "getQPoint_Y") {
+        QPoint point = inputPorts[1]->data().value<QPoint>();
+        result = Qts::getQPoint_Y(point);
+    }
+
+    return result;
+}
+
 #ifdef OPENCV_FOUND
 QVariant QBlueprintNode::opencvFunctions()
 {

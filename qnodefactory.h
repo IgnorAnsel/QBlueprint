@@ -12,6 +12,27 @@ class QNodeFactory
 {
 public:
     // 模板函数，传递一个函数并生成对应的节点
+ /**
+ * @brief 创建一个基于函数的 QBlueprintNode 节点。
+ *
+ * 该函数接受一个函数指针（或可调用对象），并生成一个对应的 `QBlueprintNode` 节点。此节点将函数的输入参数类型解析为输入端口，并将输出参数类型解析为输出端口。
+ *
+ * @tparam Func 类型化模板参数，表示传入的函数类型或可调用对象的类型。
+ * @param blueprint 指向 `QBlueprint` 的指针，用于管理节点的父蓝图。
+ * @param func 传入的函数指针或可调用对象，其输入输出参数将用于创建节点的输入输出端口。
+ * @param nodeName （可选）节点的名称，如果未指定，则默认使用函数名。如果函数名无法自动解析，用户需要手动填写。
+ * @param className （可选）节点所属的类名，默认为 "Other" 类别，可以用于分类节点。
+ * @return QBlueprintNode* 返回一个新的 `QBlueprintNode` 节点，该节点封装了传入的函数，并可用于蓝图执行。
+ *
+ * @note 该函数通过 `__PRETTY_FUNCTION__` 提取函数名以便自动生成节点名称，但如果自动提取不正常，请手动传入 `nodeName` 参数。
+ *
+ * @details 函数的具体步骤：
+ * 1. 创建一个新的 `QBlueprintNode`，并将节点类型设置为 `Type::FUNCTION`。
+ * 2. 如果没有传入 `nodeName`，则尝试从函数签名中提取函数名并设置为节点名称。
+ * 3. 使用 `parseInputPorts()` 函数解析传入函数的输入参数类型，创建对应的输入端口。
+ * 4. 使用 `parseOutputPort()` 函数解析传入函数的输出类型，创建对应的输出端口。
+ * 5. 将节点加入到蓝图管理的节点列表中，并返回该节点。
+ */
     template <typename Func>
     static QBlueprintNode* createNodeFromFunction(QBlueprint* blueprint, Func func, const QString& nodeName = QString(), const QString& className = "Other") // 自动获取函数名不正常，直接填写你需要的名称
     {

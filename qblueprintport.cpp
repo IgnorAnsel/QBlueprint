@@ -6,6 +6,8 @@ QBlueprintPort::QBlueprintPort(PortType type, const QString &name, DataType data
 {
     setFlag(QGraphicsItem::ItemIsMovable, false);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
+    setFlag(QGraphicsItem::ItemSendsGeometryChanges, true); // 允许发送几何变化
+    setAcceptHoverEvents(true);
     setQVariantType();
     setZValue(2);
 }
@@ -231,6 +233,17 @@ QString QBlueprintPort::getVarTypeName() const
 {
     return var.typeName();
 }
+
+void QBlueprintPort::hoverEnterEvent(QGraphicsSceneHoverEvent *event) {
+    QGraphicsItem::hoverEnterEvent(event);
+    setToolTip("Port: " + m_name); // 显示端口名称
+}
+
+void QBlueprintPort::hoverLeaveEvent(QGraphicsSceneHoverEvent *event) {
+    QGraphicsItem::hoverLeaveEvent(event);
+    setToolTip(""); // 清空提示
+}
+
 void QBlueprintPort::setQVariantType()
 {
     switch (dataType) {

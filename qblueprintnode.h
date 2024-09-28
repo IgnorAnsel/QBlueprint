@@ -70,9 +70,6 @@ private:
     void setQVariantType(QBlueprintPort* port);
     void customNodePortSort();
     void imageNodePortSort();
-    void initInputOrOutput(enum Type Type, DataType datatype);
-    void initData(DataType datatype);
-    void cleanData();
     QFont font;
     enum Type nodeType;
     DataType dataType;
@@ -81,27 +78,7 @@ private:
     std::vector<QBlueprintPort *> inputPorts;   // 存储输入端口
     std::vector<QBlueprintPort *> outputPorts;  // 存储输出端口
     std::vector<DataType> dataTypes;            // 存储节点支持的数据类型
-    //------------------------- 节点数据 --------------------------------//
-    std::vector<int>* intData = nullptr;               // INT
-    std::vector<float>* floatData = nullptr;           // FLOAT
-    std::vector<double>* doubleData = nullptr;         // DOUBLE
-    std::vector<char>* charData = nullptr;             // CHAR
-    std::vector<std::string>* stringData = nullptr;    // STRING
-    std::vector<bool>* boolData = nullptr;             // BOOL
-    std::vector<long>* longData = nullptr;             // LONG
-    std::vector<short>* shortData = nullptr;           // SHORT
-    std::vector<unsigned int>* unsignedIntData = nullptr;  // UNSIGNED_INT
-    std::vector<QVariant>* variantData = nullptr;      // VARIANT
-    std::vector<QString>* qStringData = nullptr;       // QSTRING
-    std::vector<QPoint>* qPointData = nullptr;         // QPOINT
-    std::vector<QPointF>* qPointFData = nullptr;       // QPOINTF
-    std::vector<QSize>* qSizeData = nullptr;           // QSIZE
-    std::vector<QSizeF>* qSizeFData = nullptr;         // QSIZEF
-    std::vector<QRect>* qRectData = nullptr;           // QRECT
-    std::vector<QRectF>* qRectFData = nullptr;         // QRECTF
-    std::vector<QColor>* qColorData = nullptr;         // QCOLOR
-    std::vector<QPixmap>* qPixmapData = nullptr;       // QPIXMAP
-    std::vector<QImage>* qImageData = nullptr;         // QIMAGE
+
     //------------------------- 节点输入 --------------------------------//
     std::vector<QLineEdit*> lineEdits;
     std::vector<QLabel*> inputlabel;
@@ -121,6 +98,7 @@ private:
 
     QVariant mathFunctions();
     QVariant opencvFunctions();
+    QVariant qtsFunctions();
 
 };
 

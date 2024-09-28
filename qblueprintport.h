@@ -3,6 +3,7 @@
 
 #include <QGraphicsItem>
 #include <QPainter>
+#include <QGraphicsSceneHoverEvent>
 #include "alluse.h"
 class QBlueprintConnection;
 class QBlueprintPort :  public QObject, public QGraphicsItem
@@ -50,6 +51,9 @@ public:
 signals:
     void dataUpdated(const QVariant &data);
 protected:
+    void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
+
     //void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 private:
     DataType dataType;
