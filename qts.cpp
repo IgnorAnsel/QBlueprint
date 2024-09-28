@@ -31,3 +31,20 @@ int Qts::getQPoint_Y(QPoint qpoint)
 {
     return qpoint.y();
 }
+QStringList Qts::inputNames_setQPointF = {"x_pos", "y_pos"};
+QString Qts::outputName_setQPointF = "QPointF";
+
+QStringList Qts::inputNames_getQPointF_X = {"qpointf"};
+QString Qts::outputName_getQPointF_X = "x";
+
+QStringList Qts::inputNames_getQPointF_Y = {"qpointf"};
+QString Qts::outputName_getQPointF_Y = "y";
+
+QStringList Qts::inputNames_setQPoint = {"x_pos", "y_pos"};
+QString Qts::outputName_setQPoint = "QPoint";
+
+QStringList Qts::inputNames_getQPoint_X = {"qpoint"};
+QString Qts::outputName_getQPoint_X = "x";
+
+QStringList Qts::inputNames_getQPoint_Y = {"qpoint"};
+QString Qts::outputName_getQPoint_Y = "y";

@@ -42,7 +42,7 @@ void QBlueprint::createBlueprintNodes() // 使用工厂方法基于函数生成�
     QBlueprintNode* math_sqrt_node = QNodeFactory::createNodeFromFunction(this, &Math::sqrt, "sqrt", "Math");
     QBlueprintNode* math_pow_node = QNodeFactory::createNodeFromFunction(this, &Math::pow, "pow", "Math");
     // 创建 Qt 一些难以实现的(QPoint...)
-    QBlueprintNode* qts_setpointf_node = QNodeFactory::createNodeFromFunction(this, &Qts::setQPointF, "setQPointF", "Qts");
+    QBlueprintNode* qts_setpointf_node = QNodeFactory::createNodeFromFunction(this, &Qts::setQPointF,Qts::inputNames_setQPointF,Qts::outputName_setQPointF, "setQPointF", "Qts");
     QBlueprintNode* qts_setpoint_node = QNodeFactory::createNodeFromFunction(this, &Qts::setQPoint, "setQPoint", "Qts");
     QBlueprintNode* qts_getpointf_x_node = QNodeFactory::createNodeFromFunction(this, &Qts::getQPointF_X, "getQPointF_X", "Qts");
     QBlueprintNode* qts_getpointf_y_node = QNodeFactory::createNodeFromFunction(this, &Qts::getQPointF_Y, "getQPointF_Y", "Qts");

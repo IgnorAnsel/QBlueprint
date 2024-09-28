@@ -15,7 +15,7 @@ public:
     void setPortFont(const QFont &font) {
         m_font = font;
     }
-    QBlueprintPort(PortType type, const QString &name, DataType dataType, QGraphicsItem *parent);
+    QBlueprintPort(PortType type, const QString &name, DataType dataType, QGraphicsItem *parent,QString brief);
     virtual QBlueprintPort* clone() const;
 
     // 设置端口的矩形区域
@@ -39,6 +39,8 @@ public:
     void sendDataToConnectedPorts();
     void receiveData(const QVariant &data);
     void setVarType(const QVariant &value);
+    void setPortBrief(QString portBrief);
+    void initPortBrief();
     QString getVarTypeName() const; // 获取 var 类型名称的方法
     void setData(const QVariant& data) {
         var = data;
@@ -56,6 +58,7 @@ protected:
 
     //void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 private:
+    QString portBrief;
     DataType dataType;
     QVariant var;
     enum Type parentnodeType;

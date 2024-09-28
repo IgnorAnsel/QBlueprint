@@ -1,20 +1,22 @@
 #include "qblueprintport.h"
 #include "qblueprintconnection.h"
 #include "qblueprint.h"
-QBlueprintPort::QBlueprintPort(PortType type, const QString &name, DataType dataType, QGraphicsItem *parent)
-    : QGraphicsItem(parent), m_type(type), m_name(name),m_font(QFont("Arial", 10)),dataType(dataType)
+QBlueprintPort::QBlueprintPort(PortType type, const QString &name, DataType dataType, QGraphicsItem *parent, QString brief)
+    : QGraphicsItem(parent), m_type(type), m_name(name),m_font(QFont("Arial", 10)),dataType(dataType),portBrief(brief)
 {
     setFlag(QGraphicsItem::ItemIsMovable, false);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true); // 允许发送几何变化
+    qDebug() << "brief: " << brief << "portBrief:" << portBrief;
     setAcceptHoverEvents(true);
     setQVariantType();
     setZValue(2);
+    //initPortBrief();
 }
 QBlueprintPort* QBlueprintPort::clone() const
 {
     // 创建一个新的 QBlueprintPort 实例并复制所需的属性
-    QBlueprintPort* newPort = new QBlueprintPort(this->m_type, this->m_name, this->dataType, nullptr); // 注意这里 parent 设为 nullptr
+    QBlueprintPort* newPort = new QBlueprintPort(this->m_type, this->m_name, this->dataType, nullptr, this->portBrief); // 注意这里 parent 设为 nullptr
     newPort->setNodeType(this->parentnodeType);
     // 复制属性
     return newPort;
@@ -189,18 +191,6 @@ void QBlueprintPort::sendDataToConnectedPorts() {
     }
 }
 
-
-// void QBlueprintPort::receiveData(const QVariant &data) {
-//     // 更新端口的变量数据
-//     var = data;
-//     qDebug() << "有数据";
-//     // 通知父节点更新 UI 或其他逻辑
-//     QBlueprintNode* parentNode = dynamic_cast<QBlueprintNode*>(parentItem());
-//     if (parentNode) {
-//         parentNode->updateLabelWithData(this, data.toString());
-//     }
-//     sendDataToConnectedPorts();
-// }
 void QBlueprintPort::receiveData(const QVariant &data) {
     if (data.canConvert<QImage>()) {
         QImage image = data.value<QImage>();
@@ -220,13 +210,19 @@ void QBlueprintPort::receiveData(const QVariant &data) {
     }
 }
 
-
-
-
-
 void QBlueprintPort::setVarType(const QVariant &value)
 {
     var = value;
+}
+
+void QBlueprintPort::setPortBrief(QString portBrief)
+{
+    portBrief = "port:" + portBrief;
+}
+
+void QBlueprintPort::initPortBrief()
+{
+    portBrief = "port:" + m_name;
 }
 
 QString QBlueprintPort::getVarTypeName() const
@@ -236,7 +232,7 @@ QString QBlueprintPort::getVarTypeName() const
 
 void QBlueprintPort::hoverEnterEvent(QGraphicsSceneHoverEvent *event) {
     QGraphicsItem::hoverEnterEvent(event);
-    setToolTip("Port: " + m_name); // 显示端口名称
+    setToolTip(portBrief); // 显示端口名称
 }
 
 void QBlueprintPort::hoverLeaveEvent(QGraphicsSceneHoverEvent *event) {

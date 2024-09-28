@@ -297,11 +297,9 @@ void QBlueprintNode::addButtonToTopLeft()
 }
 
 
-
-
 QBlueprintPort* QBlueprintNode::addInputPort()
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "NULL", dataType, this);
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "NULL", dataType, this, getEnumName(dataType));
     port->setNodeType(nodeType);
     setQVariantType(port);
     inputPorts.push_back(port);
@@ -310,7 +308,7 @@ QBlueprintPort* QBlueprintNode::addInputPort()
 
 QBlueprintPort* QBlueprintNode::addOutputPort()
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "NULL", dataType, this);
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "NULL", dataType, this, getEnumName(dataType));
     port->setNodeType(nodeType);
     setQVariantType(port);
     outputPorts.push_back(port);
@@ -324,7 +322,7 @@ QBlueprintPort* QBlueprintNode::addInputPort(const QString &name)
     {
         datatype = getEnumFromName(name);
     }
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, name, datatype, this);
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, name, datatype, this, getEnumName(datatype));
     port->setNodeType(nodeType);
     setQVariantType(port);
     inputPorts.push_back(port);
@@ -339,7 +337,7 @@ QBlueprintPort* QBlueprintNode::addOutputPort(const QString &name)
         datatype = getEnumFromName(name);
         qDebug() << "eaesaeasease" << datatype;
     }
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, name, datatype, this);
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, name, datatype, this, getEnumName(datatype));
     port->setNodeType(nodeType);
     setQVariantType(port);
     outputPorts.push_back(port);
@@ -347,7 +345,7 @@ QBlueprintPort* QBlueprintNode::addOutputPort(const QString &name)
 }
 QBlueprintPort* QBlueprintNode::addInputPort(enum Type Type)
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this);
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
     port->setNodeType(nodeType);
     setQVariantType(port);
     inputPorts.push_back(port);
@@ -355,7 +353,37 @@ QBlueprintPort* QBlueprintNode::addInputPort(enum Type Type)
 }
 QBlueprintPort* QBlueprintNode::addOutputPort(enum Type Type)
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_OUTPUT, "", dataType, this);
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_OUTPUT, "", dataType, this, getEnumName(dataType));
+    port->setNodeType(nodeType);
+    setQVariantType(port);
+    outputPorts.push_back(port);
+    return port;
+}
+
+QBlueprintPort *QBlueprintNode::addInputPort(const QString &name, const QString &brief)
+{
+    DataType datatype = dataType;
+    if(dataType == DataType::FOR_FUNCTION)
+    {
+        datatype = getEnumFromName(name);
+    }
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, name, datatype, this, brief);
+    port->setPortBrief(brief);
+    port->setNodeType(nodeType);
+    setQVariantType(port);
+    inputPorts.push_back(port);
+    return port;
+}
+
+QBlueprintPort *QBlueprintNode::addOutputPort(const QString &name, const QString &brief)
+{
+    DataType datatype = dataType;
+    if(dataType == DataType::FOR_FUNCTION)
+    {
+        datatype = getEnumFromName(name);
+    }
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, name, datatype, this, brief);
+    port->setPortBrief(brief);
     port->setNodeType(nodeType);
     setQVariantType(port);
     outputPorts.push_back(port);
