@@ -23,9 +23,7 @@ QBlueprintPort* QBlueprintPort::clone() const
 }
 QRectF QBlueprintPort::boundingRect() const
 {
-    //return QRectF(-10, -10, 20, 20);  // 扩大范围以便检测
     return QRectF(0, 0, 10, 10);  // 端口的大小为 10x10
-    //qDebug() << "QBlueprintPort boundingRect:" << rect;
 }
 
 void QBlueprintPort::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)

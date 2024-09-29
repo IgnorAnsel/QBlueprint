@@ -15,9 +15,8 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     setFlag(QGraphicsItem::ItemAcceptsInputMethod, true);
     setZValue(1);
     dataType = datatype;
-    qDebug() << ":" << dataType;
     setNodeType(Type);
-    if(nodeType == Type::FUNCTION)
+    if(nodeType == Type::FUNCTION || nodeType == Type::BRANCH || nodeType == Type::CONDITION || nodeType == Type::FORLOOP)
         customNodePortSort();
     else
         addButtonToTopLeft();
@@ -41,10 +40,14 @@ QBlueprintNode* QBlueprintNode::clone() const
     newNode->setNodeTitle(this->m_name);
     newNode->setClassName(this->class_name);
     newNode->setNodeType(this->nodeType);
-    if(newNode->nodeType != Type::INPUT) // 输入节点是不需要添加事件端口的
+    if(newNode->nodeType != Type::OUTPUT || newNode->nodeType != Type::FUNCTION) // 输入节点和控制节点是不需要添加事件端口的
     {
         newNode->addInputPort(Type::INPUT); // 添加事件端口
         newNode->addOutputPort(Type::OUTPUT);
+    }
+    else if(newNode->nodeType == Type::BRANCH)
+    {
+        newNode->addInputPort(Type::BRANCH);
     }
     // 克隆输入端口
     for (QBlueprintPort* port : this->inputPorts) {
@@ -343,21 +346,42 @@ QBlueprintPort* QBlueprintNode::addOutputPort(const QString &name)
     outputPorts.push_back(port);
     return port;
 }
-QBlueprintPort* QBlueprintNode::addInputPort(enum Type Type)
+void QBlueprintNode::addInputPort(enum Type Type)
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
-    port->setNodeType(nodeType);
-    setQVariantType(port);
-    inputPorts.push_back(port);
-    return port;
+    if(Type == Type::FUNCTION)
+    {
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
+        port->setNodeType(nodeType);
+        setQVariantType(port);
+        inputPorts.push_back(port);
+    }
+    else if(Type == Type::BRANCH)
+    {
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port_conditon = new QBlueprintPort(QBlueprintPort::EVENT_CONDITION, "", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port_return_true = new QBlueprintPort(QBlueprintPort::EVENT_TRUE_RETURN, "", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port_return_false = new QBlueprintPort(QBlueprintPort::EVENT_FALSE_RETURN, "", dataType, this, getEnumName(dataType));
+        port->setNodeType(nodeType);
+        setQVariantType(port);
+        port_conditon->setNodeType(nodeType);
+        setQVariantType(port_conditon);
+        port_return_true->setNodeType(nodeType);
+        setQVariantType(port_return_true);
+        port_return_false->setNodeType(nodeType);
+        setQVariantType(port_return_false);
+        inputPorts.push_back(port);
+        inputPorts.push_back(port_conditon);
+        inputPorts.push_back(port_return_true);
+        inputPorts.push_back(port_return_false);
+
+    }
 }
-QBlueprintPort* QBlueprintNode::addOutputPort(enum Type Type)
+void QBlueprintNode::addOutputPort(enum Type Type)
 {
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_OUTPUT, "", dataType, this, getEnumName(dataType));
     port->setNodeType(nodeType);
     setQVariantType(port);
     outputPorts.push_back(port);
-    return port;
 }
 
 QBlueprintPort *QBlueprintNode::addInputPort(const QString &name, const QString &brief)

@@ -8,7 +8,7 @@ QBlueprint::QBlueprint(QWidget *parent)
     // 设置场景的范围，可以根据需要调整
     scene->setSceneRect(0, 0, 8000, 8000);
 #ifdef OPENCV_FOUND
-    qDebug() << "yes";
+    qDebug() << "OPENCV FOUND";
 #endif
     // 将场景设置为QGraphicsView的场景
     setScene(scene);
@@ -28,11 +28,8 @@ void QBlueprint::createBlueprintNodes() // 使用工厂方法基于函数生成�
 
     createOutputNode();
     createInputNode();
-    QBlueprintNode* testclass_add_node = QNodeFactory::createNodeFromFunction(this, &TestClass::add,"add","TestClass"); // 自动获取函数名不正常，直接填写你需要的名称
-    QBlueprintNode* testclass_test_node = QNodeFactory::createNodeFromFunction(this, &TestClass::test,"test", "TestClass");
-    QBlueprintNode* qblueprint_add_node = QNodeFactory::createNodeFromFunction(this, &add,"add");
-    QBlueprintNode* qblueprint_deletea_node = QNodeFactory::createNodeFromFunction(this, &deletea,"deletea");
-
+    createControlNode();
+    // 自动获取函数名不正常，直接填写你需要的名称
 
     // 创建 Math 相关的运算节点
     QBlueprintNode* math_add_node = QNodeFactory::createNodeFromFunction(this, &Math::add, "add", "Math");
@@ -77,15 +74,6 @@ void QBlueprint::classifyNodes()
             qDebug() << "  Function:" << func;
         }
     }
-}
-
-int QBlueprint::add(int a, int b, int c)
-{
-    return a + b + c;
-}
-int QBlueprint::deletea(int a)
-{
-    return a;
 }
 QBlueprint::~QBlueprint()
 {
@@ -484,6 +472,24 @@ void QBlueprint::createInputNode()
     for (int i = 1; i < NUM_DATA_TYPES; ++i) {
         addInputNode(static_cast<DataType>(i));
     }
+}
+
+void QBlueprint::createControlNode()
+{
+    QBlueprintNode* node_branch = new QBlueprintNode(Type::BRANCH);
+    node_branch->setClassName("Control");
+    node_branch->setNodeTitle("Branch");
+    save_nodes.push_back(node_branch);
+
+    QBlueprintNode* node_forloop = new QBlueprintNode(Type::FORLOOP);
+    node_forloop->setClassName("Control");
+    node_forloop->setNodeTitle("ForLoop");
+    save_nodes.push_back(node_forloop);
+
+    QBlueprintNode* node_condition = new QBlueprintNode(Type::CONDITION);
+    node_forloop->setClassName("Control");
+    node_forloop->setNodeTitle("Condition");
+    save_nodes.push_back(node_condition);
 }
 void QBlueprint::addOutputNode(DataType dataType)
 {

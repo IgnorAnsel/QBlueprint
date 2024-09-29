@@ -10,7 +10,7 @@ class QBlueprintPort :  public QObject, public QGraphicsItem
 {
     Q_OBJECT
 public:
-    enum PortType { Input, Output, EVENT_OUTPUT, EVENT_INPUT};  // 定义端口类型：输入和输出
+    enum PortType { Input, Output, EVENT_OUTPUT, EVENT_INPUT, EVENT_TRUE_RETURN, EVENT_FALSE_RETURN, EVENT_CONDITION};  // 定义端口类型：输入和输出
     QFont m_font;
     void setPortFont(const QFont &font) {
         m_font = font;

@@ -42,8 +42,8 @@ public:
     QBlueprintPort* addInputPort(const QString &name);
     QBlueprintPort* addOutputPort(const QString &name);
     // 添加输入和输出端口（为事件的）
-    QBlueprintPort* addInputPort(enum Type Type);
-    QBlueprintPort* addOutputPort(enum Type Type);
+    void addInputPort(enum Type Type);
+    void addOutputPort(enum Type Type);
     // 有端口的信息简介时
     QBlueprintPort* addInputPort(const QString &name, const QString &brief);
     QBlueprintPort* addOutputPort(const QString &name, const QString &brief);
