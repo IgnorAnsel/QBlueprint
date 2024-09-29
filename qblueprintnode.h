@@ -18,7 +18,7 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsScene>
 #include <QGraphicsProxyWidget>
-
+#include <QComboBox>
 
 #include "testclass.h"
 class QBlueprint;
@@ -86,12 +86,15 @@ private:
     std::vector<QLineEdit*> lineEdits;
     std::vector<QLabel*> inputlabel;
     std::vector<QLabel*> outputlabel;
+    std::vector<QComboBox*> comboboxs;
     std::vector<ImageLabel*> inputImagelabel;
     std::vector<ImageLabel*> outputImagelabel;
     void addLineEdit(QBlueprintPort* port);
     void addInputLabel(QBlueprintPort* port);
+    void addLabelToPort(QBlueprintPort *port, const QString &text);
     void addOutputLabel(QBlueprintPort* outport, QBlueprintPort* inport);
     void addButtonToTopLeft();
+    void addComboBox(QBlueprintPort* port1, QBlueprintPort* port2);
     void adjustLineEditWidth(const QString &text);
     void adjustLabelWidth(const QString &text);
 

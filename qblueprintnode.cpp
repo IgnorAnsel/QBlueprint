@@ -16,7 +16,7 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     setZValue(1);
     dataType = datatype;
     setNodeType(Type);
-    if(nodeType == Type::FUNCTION || nodeType == Type::BRANCH || nodeType == Type::CONDITION || nodeType == Type::FORLOOP)
+    if(nodeType == Type::FUNCTION || nodeType == Type::BRANCH /*|| nodeType == Type::CONDITION*/ || nodeType == Type::FORLOOP)
         customNodePortSort();
     else
         addButtonToTopLeft();
@@ -43,8 +43,9 @@ QBlueprintNode* QBlueprintNode::clone() const
     qDebug() << "node type :" << nodeType;
     if(newNode->nodeType != Type::INPUT && newNode->nodeType != Type::BRANCH && newNode->nodeType != Type::CONDITION && newNode->nodeType != Type::FORLOOP) // 输入节点和控制节点是不需要添加事件端口的
     {
-        newNode->addInputPort(Type::INPUT); // 添加事件端口
-        newNode->addOutputPort(Type::OUTPUT);
+        qDebug() << "yes";
+        newNode->addInputPort(Type::FUNCTION); // 添加事件端口
+        newNode->addOutputPort(Type::FUNCTION);
     }
     else if(newNode->nodeType == Type::BRANCH)
     {
@@ -53,8 +54,7 @@ QBlueprintNode* QBlueprintNode::clone() const
     }
     else if(newNode->nodeType == Type::CONDITION)
     {
-        newNode->addInputPort(Type::CONDITION);
-        newNode->addOutputPort(Type::CONDITION);
+
     }
     else if(newNode->nodeType == Type::FORLOOP)
     {
@@ -178,6 +178,16 @@ QRectF QBlueprintNode::boundingRect() const
         default:
             break;
         }
+    }
+    else if(nodeType == Type::CONDITION)
+    {
+        int maxLabelWidth = 0;
+        for(const auto& label : outputlabel)
+        {
+            if(maxLabelWidth < label->width())
+                maxLabelWidth = label->width();
+        }
+        nodeWidth += maxLabelWidth;
     }
     return QRectF(0, 0, nodeWidth, nodeHeight);
 }
@@ -304,13 +314,15 @@ void QBlueprintNode::addButtonToTopLeft()
             default:
                 break;
             }
-
         }
-
+        else if(nodeType == Type::CONDITION) // 添加条件
+        {
+            addInputPort(Type::CONDITION);
+            addOutputPort(Type::CONDITION);
+        }
         qDebug() << "Button clicked!";
     });
 }
-
 
 QBlueprintPort* QBlueprintNode::addInputPort()
 {
@@ -360,6 +372,8 @@ QBlueprintPort* QBlueprintNode::addOutputPort(const QString &name)
 }
 void QBlueprintNode::addInputPort(enum Type Type)
 {
+    qDebug() << "yesss:" << Type;
+
     if(Type == Type::FUNCTION)
     {
         QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
@@ -370,7 +384,7 @@ void QBlueprintNode::addInputPort(enum Type Type)
     else if(Type == Type::BRANCH)
     {
         QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
-        QBlueprintPort *port_conditon = new QBlueprintPort(QBlueprintPort::EVENT_CONDITION, "", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port_conditon = new QBlueprintPort(QBlueprintPort::Input, "Conditon", dataType, this, getEnumName(dataType));
         port->setNodeType(nodeType);
         setQVariantType(port);
         port_conditon->setNodeType(nodeType);
@@ -380,14 +394,25 @@ void QBlueprintNode::addInputPort(enum Type Type)
     }
     else if(Type == Type::CONDITION)
     {
-        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
-        QBlueprintPort *port2 = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "E", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port2 = new QBlueprintPort(QBlueprintPort::Input, "E", dataType, this, getEnumName(dataType));
         port->setNodeType(nodeType);
         setQVariantType(port);
         port2->setNodeType(nodeType);
         setQVariantType(port2);
         inputPorts.push_back(port);
         inputPorts.push_back(port2);
+        addComboBox(port, port2);
+        customNodePortSort();
+        addOutputLabel(port, port);
+        addOutputLabel(port2, port2);
+    }
+    else
+    {
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
+        port->setNodeType(nodeType);
+        setQVariantType(port);
+        inputPorts.push_back(port);
     }
 }
 void QBlueprintNode::addOutputPort(enum Type Type)
@@ -401,8 +426,8 @@ void QBlueprintNode::addOutputPort(enum Type Type)
     }
     else if(Type == Type::BRANCH)
     {
-        QBlueprintPort *port_return_true = new QBlueprintPort(QBlueprintPort::EVENT_TRUE_RETURN, "", dataType, this, getEnumName(dataType));
-        QBlueprintPort *port_return_false = new QBlueprintPort(QBlueprintPort::EVENT_FALSE_RETURN, "", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port_return_true = new QBlueprintPort(QBlueprintPort::EVENT_TRUE_RETURN, "True", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port_return_false = new QBlueprintPort(QBlueprintPort::EVENT_FALSE_RETURN, "False", dataType, this, getEnumName(dataType));
         port_return_true->setNodeType(nodeType);
         setQVariantType(port_return_true);
         port_return_false->setNodeType(nodeType);
@@ -412,7 +437,7 @@ void QBlueprintNode::addOutputPort(enum Type Type)
     }
     else if(Type == Type::CONDITION)
     {
-        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "Condition", dataType, this, getEnumName(dataType));
         port->setNodeType(nodeType);
         setQVariantType(port);
         outputPorts.push_back(port);
@@ -557,12 +582,14 @@ void QBlueprintNode::customNodePortSort() {
         int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
         inputPorts[i]->setPos(5, i * 30 + 40); // 左边距15，纵向位置
     }
-
     // 排列输出端口
     for (size_t i = 0; i < outputPorts.size(); ++i) {
         QFontMetrics fontMetrics(outputPorts[i]->m_font);
         int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
-        outputPorts[i]->setPos(boundingRect().width() - 15, i * 30 + 40); // 右边距15
+        if(nodeType == Type::CONDITION) // 条件节点的输出端口是需要间隔一个output的
+            outputPorts[i]->setPos(boundingRect().width() - 15, i * 60 + 40); // 右边距15
+        else
+            outputPorts[i]->setPos(boundingRect().width() - 15, i * 30 + 40); // 右边距15
     }
 }
 
@@ -608,7 +635,23 @@ void QBlueprintNode::imageNodePortSort() {
     }
 
 }
+void QBlueprintNode::addComboBox(QBlueprintPort *port1, QBlueprintPort *port2)
+{
+    QComboBox *comboBox = new QComboBox();
+    comboBox->addItem("     >     ");
+    comboBox->addItem("     <     ");
+    comboBox->addItem("     =     ");
+    comboBox->addItem("     >=    ");
+    comboBox->addItem("     <=    ");
+    comboBox->addItem("     !=    ");
+    QGraphicsProxyWidget* pMyProxy = new QGraphicsProxyWidget(this); // 代理作为 QGraphicsItem 的子项
+    pMyProxy->setWidget(comboBox); // 将 QWidget 基类对象添加到代理中
+    pMyProxy->setZValue(10);
+    QPointF outputPortPos = port2->pos();
+    pMyProxy->setPos(outputPortPos.x() - comboBox->width() + 233, outputPortPos.y() + 35 + (outputPorts.size()) * 60 + 32);
+    comboboxs.push_back(comboBox);
 
+}
 void QBlueprintNode::addLineEdit(QBlueprintPort* port)
 {
     // 创建 QLineEdit
@@ -754,7 +797,7 @@ void QBlueprintNode::addInputLabel(QBlueprintPort* port)
     });
 
     // 确保场景更新
-    scene()->update();
+    //scene()->update();
 }
 
 
@@ -956,7 +999,19 @@ QVariant QBlueprintNode::qtsFunctions()
 
     return result;
 }
+void QBlueprintNode::addLabelToPort(QBlueprintPort* port, const QString &text)
+{
+    QLabel* label = new QLabel(text);
+    label->setStyleSheet("QLabel { border: 1px solid black; padding: 2px; }");
 
+    QGraphicsProxyWidget* proxy = new QGraphicsProxyWidget(this);
+    proxy->setWidget(label);
+
+    QPointF portPos = port->pos();
+    proxy->setPos(portPos.x() - 70, portPos.y() - 5);
+
+    inputlabel.push_back(label);
+}
 #ifdef OPENCV_FOUND
 QVariant QBlueprintNode::opencvFunctions()
 {
