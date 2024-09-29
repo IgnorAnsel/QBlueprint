@@ -20,7 +20,6 @@ QBlueprint::QBlueprint(QWidget *parent)
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     setBackgroundBrush(QColor(30, 30, 30));  // 设置深色背景
     createBlueprintNodes();
-
 }
 
 void QBlueprint::createBlueprintNodes() // 使用工厂方法基于函数生成节点
@@ -487,8 +486,8 @@ void QBlueprint::createControlNode()
     save_nodes.push_back(node_forloop);
 
     QBlueprintNode* node_condition = new QBlueprintNode(Type::CONDITION);
-    node_forloop->setClassName("Control");
-    node_forloop->setNodeTitle("Condition");
+    node_condition->setClassName("Control");
+    node_condition->setNodeTitle("Condition");
     save_nodes.push_back(node_condition);
 }
 void QBlueprint::addOutputNode(DataType dataType)

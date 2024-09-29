@@ -36,7 +36,7 @@ void QBlueprintPort::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     int textHeight = fontMetrics.height();
 
     // 绘制端口
-    if (m_type == EVENT_INPUT || m_type == EVENT_OUTPUT)
+    if (m_type == EVENT_INPUT || m_type == EVENT_OUTPUT || m_type == EVENT_TRUE_RETURN || m_type == EVENT_FALSE_RETURN)
     {
         // 绘制朝右的三角形
         QPolygonF triangle;
