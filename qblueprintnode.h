@@ -34,7 +34,7 @@ public:
 
     // 重载paint()方法，定义绘制节点的具体方式
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-    void addInputPortConditon(enum Type Type);
+    void addInputPortCondition(enum Type Type);
     // 添加输入和输出端口
     QBlueprintPort* addInputPort();
     QBlueprintPort* addOutputPort();

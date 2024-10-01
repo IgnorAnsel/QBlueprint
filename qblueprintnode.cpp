@@ -262,7 +262,7 @@ void QBlueprintNode::addButtonToTopLeft(enum Type type)
 
     // 设置按钮的点击事件
     connect(button, &QPushButton::clicked, [this](){
-        addInputPortConditon(Type::CONDITION);
+        addInputPortCondition(Type::CONDITION);
     });
 }
 void QBlueprintNode::addButtonToTopLeft()
@@ -403,9 +403,9 @@ QBlueprintPort* QBlueprintNode::addOutputPort(const QString &name)
     outputPorts.push_back(port);
     return port;
 }
-void QBlueprintNode::addInputPortConditon(enum Type Type)
+void QBlueprintNode::addInputPortCondition(enum Type Type)
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "Conditon", dataType, this, getEnumName(dataType));
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "Condition", dataType, this, getEnumName(dataType));
     port->setNodeType(nodeType);
     setQVariantType(port);
     inputPorts.push_back(port);
@@ -429,13 +429,13 @@ void QBlueprintNode::addInputPort(enum Type Type)
     else if(Type == Type::BRANCH)
     {
         QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
-        QBlueprintPort *port_conditon = new QBlueprintPort(QBlueprintPort::Input, "Conditon", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port_Condition = new QBlueprintPort(QBlueprintPort::Input, "Condition", dataType, this, getEnumName(dataType));
         port->setNodeType(nodeType);
         setQVariantType(port);
-        port_conditon->setNodeType(nodeType);
-        setQVariantType(port_conditon);
+        port_Condition->setNodeType(nodeType);
+        setQVariantType(port_Condition);
         inputPorts.push_back(port);
-        inputPorts.push_back(port_conditon);
+        inputPorts.push_back(port_Condition);
     }
     else if(Type == Type::CONDITION)
     {
@@ -629,12 +629,15 @@ void QBlueprintNode::customNodePortSort() {
     if(nodeType == Type::CONDITION)
     {
         // 排列输入端口
-        int count;
+        int count = 0;
         for (size_t i = 0; i < inputPorts.size(); ++i) {
             QFontMetrics fontMetrics(inputPorts[i]->m_font);
             int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
-
-            inputPorts[i]->setPos(5, i * 30 + 40); // 左边距15，纵向位置
+            inputPorts[i]->setPos(5, i * 30 + 40 + (count/2) * 20); // 左边距15，纵向位置
+            if(inputPorts[i]->name() == "E")
+                count ++;
+            else if(inputPorts[i]->name() == "Condition")
+                count +=2;
         }
         // 排列输出端口
         for (size_t i = 0; i < outputPorts.size(); ++i) {
