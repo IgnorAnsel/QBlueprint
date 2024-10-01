@@ -34,7 +34,7 @@ public:
 
     // 重载paint()方法，定义绘制节点的具体方式
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-
+    void addInputPortConditon(enum Type Type);
     // 添加输入和输出端口
     QBlueprintPort* addInputPort();
     QBlueprintPort* addOutputPort();
@@ -66,6 +66,7 @@ public:
     void updateLabelWithData(QBlueprintPort *port, const QString &data);
     void processData(QBlueprintPort *inputPort, const QVariant &data);
     bool isPortConnected(QBlueprintPort *inputPort, QBlueprintPort *outputPort);
+    void addRadioButtonOptions(QBlueprintPort *port);
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
@@ -90,11 +91,12 @@ private:
     std::vector<ImageLabel*> inputImagelabel;
     std::vector<ImageLabel*> outputImagelabel;
     void addLineEdit(QBlueprintPort* port);
+    void addLineEdit(QBlueprintPort *port1, QBlueprintPort *port2);
     void addInputLabel(QBlueprintPort* port);
     void addLabelToPort(QBlueprintPort *port, const QString &text);
     void addOutputLabel(QBlueprintPort* outport, QBlueprintPort* inport);
+    void addButtonToTopLeft(enum Type type);
     void addButtonToTopLeft();
-    void addComboBox(QBlueprintPort* port1, QBlueprintPort* port2);
     void adjustLineEditWidth(const QString &text);
     void adjustLabelWidth(const QString &text);
 

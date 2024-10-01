@@ -13,6 +13,9 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     setFlag(QGraphicsItem::ItemIsMovable, true);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
     setFlag(QGraphicsItem::ItemAcceptsInputMethod, true);
+    setAcceptedMouseButtons(Qt::AllButtons);
+    setFlag(QGraphicsItem::ItemIsFocusable, true);
+
     setZValue(1);
     dataType = datatype;
     setNodeType(Type);
@@ -54,7 +57,7 @@ QBlueprintNode* QBlueprintNode::clone() const
     }
     else if(newNode->nodeType == Type::CONDITION)
     {
-
+        newNode->addButtonToTopLeft(Type::CONDITION);
     }
     else if(newNode->nodeType == Type::FORLOOP)
     {
@@ -187,7 +190,7 @@ QRectF QBlueprintNode::boundingRect() const
             if(maxLabelWidth < label->width())
                 maxLabelWidth = label->width();
         }
-        nodeWidth += maxLabelWidth;
+        nodeWidth += maxLabelWidth + 50;
     }
     return QRectF(0, 0, nodeWidth, nodeHeight);
 }
@@ -231,6 +234,36 @@ void QBlueprintNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
         imageNodePortSort();
     else
         customNodePortSort();
+}
+void QBlueprintNode::addButtonToTopLeft(enum Type type)
+
+{
+    // 创建 QPushButton
+    QPushButton* button = new QPushButton("+");
+    // 创建 QGraphicsProxyWidget 并将按钮嵌入其中
+    QGraphicsProxyWidget* buttonProxy = new QGraphicsProxyWidget(this);
+    // 设置按钮的大小，按钮应该是一个正方形以便显示成圆形
+    int buttonSize = 10;
+    button->setFixedSize(buttonSize, buttonSize);
+    // 使用样式表将按钮绘制成一个圆
+    button->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #2196F3;"  // 按钮背景颜色（蓝色）
+        "    color: white;"  // 按钮文字颜色（白色）
+        "    border: none;"  // 无边框
+        "    border-radius: 0px;"  // 设置圆角半径，半径为按钮尺寸的一半
+        "}"
+        "QPushButton:pressed {"
+        "    background-color: #45a049;"  // 点击时的背景颜色
+        "}"
+        );
+    buttonProxy->setWidget(button);
+    buttonProxy->setPos(25, 10);
+
+    // 设置按钮的点击事件
+    connect(button, &QPushButton::clicked, [this](){
+        addInputPortConditon(Type::CONDITION);
+    });
 }
 void QBlueprintNode::addButtonToTopLeft()
 {
@@ -370,10 +403,22 @@ QBlueprintPort* QBlueprintNode::addOutputPort(const QString &name)
     outputPorts.push_back(port);
     return port;
 }
+void QBlueprintNode::addInputPortConditon(enum Type Type)
+{
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "Conditon", dataType, this, getEnumName(dataType));
+    port->setNodeType(nodeType);
+    setQVariantType(port);
+    inputPorts.push_back(port);
+    addOutputPort(Type);
+    customNodePortSort();
+    if(inputPorts.size()>1)
+    {
+        addRadioButtonOptions(port);
+    }
+}
+
 void QBlueprintNode::addInputPort(enum Type Type)
 {
-    qDebug() << "yesss:" << Type;
-
     if(Type == Type::FUNCTION)
     {
         QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
@@ -402,10 +447,12 @@ void QBlueprintNode::addInputPort(enum Type Type)
         setQVariantType(port2);
         inputPorts.push_back(port);
         inputPorts.push_back(port2);
-        addComboBox(port, port2);
+        addLineEdit(port, port2);
         customNodePortSort();
         addOutputLabel(port, port);
         addOutputLabel(port2, port2);
+        if(inputPorts.size()>2)
+            addRadioButtonOptions(port);
     }
     else
     {
@@ -437,10 +484,13 @@ void QBlueprintNode::addOutputPort(enum Type Type)
     }
     else if(Type == Type::CONDITION)
     {
-        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "Condition", dataType, this, getEnumName(dataType));
-        port->setNodeType(nodeType);
-        setQVariantType(port);
-        outputPorts.push_back(port);
+        if(outputPorts.size()==0)
+        {
+            QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "Condition", dataType, this, getEnumName(dataType));
+            port->setNodeType(nodeType);
+            setQVariantType(port);
+            outputPorts.push_back(port);
+        }
     }
 }
 
@@ -576,20 +626,39 @@ void QBlueprintNode::setQVariantType(QBlueprintPort* port)
 }
 
 void QBlueprintNode::customNodePortSort() {
-    // 排列输入端口
-    for (size_t i = 0; i < inputPorts.size(); ++i) {
-        QFontMetrics fontMetrics(inputPorts[i]->m_font);
-        int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
-        inputPorts[i]->setPos(5, i * 30 + 40); // 左边距15，纵向位置
-    }
-    // 排列输出端口
-    for (size_t i = 0; i < outputPorts.size(); ++i) {
-        QFontMetrics fontMetrics(outputPorts[i]->m_font);
-        int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
-        if(nodeType == Type::CONDITION) // 条件节点的输出端口是需要间隔一个output的
+    if(nodeType == Type::CONDITION)
+    {
+        // 排列输入端口
+        int count;
+        for (size_t i = 0; i < inputPorts.size(); ++i) {
+            QFontMetrics fontMetrics(inputPorts[i]->m_font);
+            int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
+
+            inputPorts[i]->setPos(5, i * 30 + 40); // 左边距15，纵向位置
+        }
+        // 排列输出端口
+        for (size_t i = 0; i < outputPorts.size(); ++i) {
+            QFontMetrics fontMetrics(outputPorts[i]->m_font);
+            int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
             outputPorts[i]->setPos(boundingRect().width() - 15, i * 60 + 40); // 右边距15
-        else
-            outputPorts[i]->setPos(boundingRect().width() - 15, i * 30 + 40); // 右边距15
+        }
+    }
+    else {
+        // 排列输入端口
+        for (size_t i = 0; i < inputPorts.size(); ++i) {
+            QFontMetrics fontMetrics(inputPorts[i]->m_font);
+            int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
+            inputPorts[i]->setPos(5, i * 30 + 40); // 左边距15，纵向位置
+        }
+        // 排列输出端口
+        for (size_t i = 0; i < outputPorts.size(); ++i) {
+            QFontMetrics fontMetrics(outputPorts[i]->m_font);
+            int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
+            if(nodeType == Type::CONDITION) // 条件节点的输出端口是需要间隔一个output的
+                outputPorts[i]->setPos(boundingRect().width() - 15, i * 60 + 40); // 右边距15
+            else
+                outputPorts[i]->setPos(boundingRect().width() - 15, i * 30 + 40); // 右边距15
+        }
     }
 }
 
@@ -635,23 +704,44 @@ void QBlueprintNode::imageNodePortSort() {
     }
 
 }
-void QBlueprintNode::addComboBox(QBlueprintPort *port1, QBlueprintPort *port2)
+void QBlueprintNode::addLineEdit(QBlueprintPort *port1, QBlueprintPort *port2)
 {
-    QComboBox *comboBox = new QComboBox();
-    comboBox->addItem("     >     ");
-    comboBox->addItem("     <     ");
-    comboBox->addItem("     =     ");
-    comboBox->addItem("     >=    ");
-    comboBox->addItem("     <=    ");
-    comboBox->addItem("     !=    ");
-    QGraphicsProxyWidget* pMyProxy = new QGraphicsProxyWidget(this); // 代理作为 QGraphicsItem 的子项
-    pMyProxy->setWidget(comboBox); // 将 QWidget 基类对象添加到代理中
-    pMyProxy->setZValue(10);
-    QPointF outputPortPos = port2->pos();
-    pMyProxy->setPos(outputPortPos.x() - comboBox->width() + 233, outputPortPos.y() + 35 + (outputPorts.size()) * 60 + 32);
-    comboboxs.push_back(comboBox);
+    // 创建 QLineEdit
+    QLineEdit *lineEdit = new QLineEdit();
+    lineEdit->setPlaceholderText("条件");  // 设置提示文本
+    lineEdit->setStyleSheet("QLineEdit { border: 1px solid black; padding: 2px; }");  // 设置样式
+    lineEdit->resize(80, 20);
 
+    // 创建 QGraphicsProxyWidget 并将 lineEdit 添加到代理
+    QGraphicsProxyWidget *pMyProxy = new QGraphicsProxyWidget(this);
+    pMyProxy->setWidget(lineEdit);
+
+    // 设置 Z 值，确保控件显示在前景
+    pMyProxy->setZValue(10);
+
+    // 设置代理的位置
+    QPointF outputPortPos = port2->pos();
+    pMyProxy->setPos(outputPortPos.x() - lineEdit->width() + 233, (inputPorts.size()) * 30 + 5);
+
+    // 将 lineEdit 添加到列表中
+    lineEdits.push_back(lineEdit);
+
+    // 使用 QRegularExpressionValidator 限制输入条件符号
+    QRegularExpression regex(R"(>|<|=|>=|<=|!=)");  // 允许的符号
+    QValidator *validator = new QRegularExpressionValidator(regex, this);
+    lineEdit->setValidator(validator);
+
+    connect(lineEdit, &QLineEdit::textChanged, this, [=](const QString &text) {
+        QStringList allowedConditions = {">", "<", "=", ">=", "<=", "!="};
+        if (allowedConditions.contains(text.trimmed())) {
+            qDebug() << "输入条件符号：" << text;
+        } else {
+            qDebug() << "无效输入，当前仅支持条件符号：" << allowedConditions;
+        }
+    });
 }
+
+
 void QBlueprintNode::addLineEdit(QBlueprintPort* port)
 {
     // 创建 QLineEdit
@@ -845,6 +935,58 @@ void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inp
 
     // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
     outputlabel.push_back(pLabel);
+}
+void QBlueprintNode::addRadioButtonOptions(QBlueprintPort *port)
+{
+    // 创建 QWidget 作为 QGraphicsProxyWidget 的容器
+    QWidget *containerWidget = new QWidget();
+    QHBoxLayout *layout = new QHBoxLayout(containerWidget);  // 使用水平布局管理器
+
+    // 设置布局的间距和边距
+    layout->setSpacing(5);  // 控件之间的间距
+    layout->setContentsMargins(0, 0, 0, 0);  // 去掉边距
+
+    // 创建两个 QRadioButton 用于选择 || 和 &&
+    QRadioButton *orOption = new QRadioButton("||");
+    QRadioButton *andOption = new QRadioButton("&&");
+
+    // 设置单选按钮的大小
+    orOption->setFixedSize(40, 20);
+    andOption->setFixedSize(40, 20);
+
+    // 默认选中 || 选项
+    orOption->setChecked(true);
+
+    // 将单选按钮添加到布局
+    layout->addWidget(orOption);
+    layout->addWidget(andOption);
+
+    // 创建 QGraphicsProxyWidget 并将 containerWidget 添加到代理
+    QGraphicsProxyWidget *pMyProxy = new QGraphicsProxyWidget(this);
+    pMyProxy->setWidget(containerWidget);
+
+    // 设置代理的位置
+    QPointF portPos = port->pos();
+    pMyProxy->setPos(portPos.x() - 25, portPos.y());  // 调整位置以适应布局
+
+    // 确保布局适合代理的大小
+    containerWidget->setLayout(layout);
+    containerWidget->setFixedSize(90, 25);  // 缩小容器的大小
+
+    // 连接单选按钮的信号到槽函数，用于处理选择的变化
+    connect(orOption, &QRadioButton::toggled, this, [=](bool checked) {
+        if (checked) {
+            qDebug() << "选择了 || 选项";
+            // 这里可以添加进一步的逻辑处理
+        }
+    });
+
+    connect(andOption, &QRadioButton::toggled, this, [=](bool checked) {
+        if (checked) {
+            qDebug() << "选择了 && 选项";
+            // 这里可以添加进一步的逻辑处理
+        }
+    });
 }
 
 void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& data) {
