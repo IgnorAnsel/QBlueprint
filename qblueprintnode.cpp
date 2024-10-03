@@ -751,6 +751,7 @@ void QBlueprintNode::addLineEdit(QBlueprintPort *port1, QBlueprintPort *port2)
         if (allowedConditions.contains(text.trimmed())) {
             relation[currentIndex] = text.trimmed();  // 将输入的条件符号存入 relation 的对应位置
             qDebug() << "输入条件符号：" << relation[currentIndex];
+            processData(nullptr, QVariant());
         } else {
             qDebug() << "无效输入，当前仅支持条件符号：" << allowedConditions;
         }
@@ -1002,6 +1003,8 @@ void QBlueprintNode::addRadioButtonOptions(QBlueprintPort *port)
         if (checked) {
             radioButtonValues[currentIndex] = "||";  // 更新当前选项为 "||"
             qDebug() << "选择了 || 选项";
+            processData(nullptr, QVariant());
+
         }
     });
 
@@ -1009,6 +1012,8 @@ void QBlueprintNode::addRadioButtonOptions(QBlueprintPort *port)
         if (checked) {
             radioButtonValues[currentIndex] = "&&";  // 更新当前选项为 "&&"
             qDebug() << "选择了 && 选项";
+            processData(nullptr, QVariant());
+
         }
     });
 }
@@ -1022,12 +1027,13 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
         int count = 0;
         int radioButtonindex = 0;
         int relationindex = 0;
+        partbool.clear();
         for(int i = 0;i < inputPorts.size(); i++)
         {
-            qDebug() << "inputPorts[i]->name()" << inputPorts[i]->name();
             if(inputPorts[i]->name() == "E1")
             {
                 bool E_bool = false;
+                qDebug() << "inputPorts[i]->name()" << inputPorts[i]->name();
                 QString relationSymbol = relation[relationindex]; // 获取当前的关系符号
                 QVariant data1 = inputPorts[i]->data();
                 QVariant data2 = inputPorts[i+1]->data();
@@ -1081,10 +1087,17 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
             radioButtonindex ++;
         }
         result = result_bool;
-        qDebug() << "result:" << result_bool;
+        for (QBlueprintPort* outputPort : outputPorts) {
+            if (outputPort) {
+                outputPort->setVarType(result_bool); // 设置布尔值到输出端口
+                outputPort->sendDataToConnectedPorts(); // 发送数据给连接的下一个端口
+            }
+        }
+
+        qDebug() << "Condition result:" << result_bool;
     }
     // 根据 inputPort 来判断需要处理的逻辑
-    qDebug() << "节点" << m_name << "接收到数据:" << data << "从端口:" << inputPort->name();
+    //qDebug() << "节点" << m_name << "接收到数据:" << data << "从端口:" << inputPort->name();
     // 如果有对应的 QLabel 需要更新（例如在 inputPort 上有 QLabel）
     auto it = std::find(inputPorts.begin(), inputPorts.end(), inputPort);
     if (it != inputPorts.end()) {
@@ -1117,22 +1130,26 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
 #endif
     else if(class_name == "Qts")
         result = qtsFunctions();
-    if(inputPort->getNodeType() == Type::FUNCTION)
-        for (QBlueprintPort* outputPort : outputPorts) {
-            if (outputPort) {
-                outputPort->setVarType(result); // 更新输出端口的 var
-                outputPort->sendDataToConnectedPorts(); // 发送数据到连接的下一个端口
+    if(inputPort != nullptr)
+    {
+        if(inputPort->getNodeType() == Type::FUNCTION)
+            for (QBlueprintPort* outputPort : outputPorts) {
+                if (outputPort) {
+                    outputPort->setVarType(result); // 更新输出端口的 var
+                    outputPort->sendDataToConnectedPorts(); // 发送数据到连接的下一个端口
+                }
             }
-        }
-    // 处理数据的逻辑，将数据传递给 outputPort
-    else
-        for (QBlueprintPort* outputPort : outputPorts) {
-            if (outputPort && isPortConnected(inputPort, outputPort)) {
-                qDebug() << "the data:" << data;
-                outputPort->setVarType(data);  // 更新 outputPort 的数据
-                outputPort->sendDataToConnectedPorts();  // 通过 outputPort 发送数据给下一个端口
+        // 处理数据的逻辑，将数据传递给 outputPort
+        else
+            for (QBlueprintPort* outputPort : outputPorts) {
+                if (outputPort && isPortConnected(inputPort, outputPort)) {
+                    qDebug() << "the data:" << data;
+                    outputPort->setVarType(data);  // 更新 outputPort 的数据
+                    outputPort->sendDataToConnectedPorts();  // 通过 outputPort 发送数据给下一个端口
+                }
             }
-        }
+    }
+
 
 }
 bool QBlueprintNode::isPortConnected(QBlueprintPort* inputPort, QBlueprintPort* outputPort) {
