@@ -6,7 +6,6 @@
 #include <QDebug>
 #include <cmath>
 #include <QMenu>
-#include <QRadioButton>
 #include "qblueprintnode.h"
 #include "qblueprintconnection.h"
 #include "qnodefactory.h"

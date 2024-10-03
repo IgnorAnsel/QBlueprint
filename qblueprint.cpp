@@ -485,7 +485,7 @@ void QBlueprint::createControlNode()
     node_forloop->setNodeTitle("ForLoop");
     save_nodes.push_back(node_forloop);
 
-    QBlueprintNode* node_condition = new QBlueprintNode(Type::CONDITION);
+    QBlueprintNode* node_condition = new QBlueprintNode(Type::CONDITION,DataType::VARIANT);
     node_condition->setClassName("Control");
     node_condition->setNodeTitle("Condition");
     save_nodes.push_back(node_condition);

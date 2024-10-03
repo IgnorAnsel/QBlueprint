@@ -208,6 +208,8 @@ QColor QBlueprintConnection::getColorFromType(enum Type type)
         return QColor(0, 255, 0);  // 颜色为绿色
     else if (type == Type::OUTPUT)
         return QColor(Qt::red);  // 颜色为红色
+    else if (type == Type::CONDITION)
+        return QColor(124, 255, 0);
     else
         qDebug() <<"unkown type:" <<type;
 }

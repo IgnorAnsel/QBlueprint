@@ -19,6 +19,7 @@
 #include <QGraphicsScene>
 #include <QGraphicsProxyWidget>
 #include <QComboBox>
+#include <QRadioButton>
 
 #include "testclass.h"
 class QBlueprint;
@@ -63,7 +64,6 @@ public:
     // 数据类型管理方法
     void addDataType(DataType type) { dataTypes.push_back(type); }
     const std::vector<DataType>& getDataTypes() const { return dataTypes; }
-    void updateLabelWithData(QBlueprintPort *port, const QString &data);
     void processData(QBlueprintPort *inputPort, const QVariant &data);
     bool isPortConnected(QBlueprintPort *inputPort, QBlueprintPort *outputPort);
     void addRadioButtonOptions(QBlueprintPort *port);
@@ -90,6 +90,10 @@ private:
     std::vector<QComboBox*> comboboxs;
     std::vector<ImageLabel*> inputImagelabel;
     std::vector<ImageLabel*> outputImagelabel;
+    std::vector<std::pair<QRadioButton*, QRadioButton*>> radioButtonOptions; // 存放关系 || &&
+    std::vector<QString> radioButtonValues;
+    std::vector<QString> relation; // 存放关系 ><=等
+    std::vector<bool> partbool; // 每一个部分的bool值
     void addLineEdit(QBlueprintPort* port);
     void addLineEdit(QBlueprintPort *port1, QBlueprintPort *port2);
     void addInputLabel(QBlueprintPort* port);
