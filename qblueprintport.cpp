@@ -23,9 +23,7 @@ QBlueprintPort* QBlueprintPort::clone() const
 }
 QRectF QBlueprintPort::boundingRect() const
 {
-    //return QRectF(-10, -10, 20, 20);  // 扩大范围以便检测
     return QRectF(0, 0, 10, 10);  // 端口的大小为 10x10
-    //qDebug() << "QBlueprintPort boundingRect:" << rect;
 }
 
 void QBlueprintPort::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -38,7 +36,7 @@ void QBlueprintPort::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     int textHeight = fontMetrics.height();
 
     // 绘制端口
-    if (m_type == EVENT_INPUT || m_type == EVENT_OUTPUT)
+    if (m_type == EVENT_INPUT || m_type == EVENT_OUTPUT || m_type == EVENT_TRUE_RETURN || m_type == EVENT_FALSE_RETURN)
     {
         // 绘制朝右的三角形
         QPolygonF triangle;

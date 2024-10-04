@@ -98,7 +98,8 @@ void QBlueprintConnection::paint(QPainter *painter, const QStyleOptionGraphicsIt
     qreal dy = m_endPoint.y() - m_startPoint.y();
     qreal offset = qAbs(dx) * 0.6;  // 控制点偏移量
 
-    if (m_startPort->portType() == QBlueprintPort::Output || m_startPort->portType() == QBlueprintPort::EVENT_OUTPUT)
+    if (m_startPort->portType() == QBlueprintPort::Output || m_startPort->portType() == QBlueprintPort::EVENT_OUTPUT
+        || m_startPort->portType() == QBlueprintPort::EVENT_TRUE_RETURN || m_startPort->portType() == QBlueprintPort::EVENT_FALSE_RETURN)
     {
         if (dx > 0)
         {
@@ -208,6 +209,10 @@ QColor QBlueprintConnection::getColorFromType(enum Type type)
         return QColor(0, 255, 0);  // 颜色为绿色
     else if (type == Type::OUTPUT)
         return QColor(Qt::red);  // 颜色为红色
+    else if (type == Type::CONDITION)
+        return QColor(124, 255, 0);
+    else if (type == Type::BRANCH)
+        return QColor(0,125,125);
     else
         qDebug() <<"unkown type:" <<type;
 }

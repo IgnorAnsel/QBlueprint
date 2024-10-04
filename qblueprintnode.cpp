@@ -13,11 +13,13 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     setFlag(QGraphicsItem::ItemIsMovable, true);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
     setFlag(QGraphicsItem::ItemAcceptsInputMethod, true);
+    setAcceptedMouseButtons(Qt::AllButtons);
+    setFlag(QGraphicsItem::ItemIsFocusable, true);
+
     setZValue(1);
     dataType = datatype;
-    qDebug() << ":" << dataType;
     setNodeType(Type);
-    if(nodeType == Type::FUNCTION)
+    if(nodeType == Type::FUNCTION || nodeType == Type::BRANCH /*|| nodeType == Type::CONDITION*/ || nodeType == Type::FORLOOP)
         customNodePortSort();
     else
         addButtonToTopLeft();
@@ -41,14 +43,30 @@ QBlueprintNode* QBlueprintNode::clone() const
     newNode->setNodeTitle(this->m_name);
     newNode->setClassName(this->class_name);
     newNode->setNodeType(this->nodeType);
-    if(newNode->nodeType != Type::INPUT) // 输入节点是不需要添加事件端口的
+    qDebug() << "node type :" << nodeType;
+    if(newNode->nodeType != Type::INPUT && newNode->nodeType != Type::BRANCH && newNode->nodeType != Type::CONDITION && newNode->nodeType != Type::FORLOOP) // 输入节点和控制节点是不需要添加事件端口的
     {
-        newNode->addInputPort(Type::INPUT); // 添加事件端口
-        newNode->addOutputPort(Type::OUTPUT);
+        qDebug() << "yes";
+        newNode->addInputPort(Type::FUNCTION); // 添加事件端口
+        newNode->addOutputPort(Type::FUNCTION);
+    }
+    else if(newNode->nodeType == Type::BRANCH)
+    {
+        newNode->addInputPort(Type::BRANCH);
+        newNode->addOutputPort(Type::BRANCH);
+    }
+    else if(newNode->nodeType == Type::CONDITION)
+    {
+        newNode->addButtonToTopLeft(Type::CONDITION);
+    }
+    else if(newNode->nodeType == Type::FORLOOP)
+    {
+        newNode->addInputPort(Type::FORLOOP);
+        newNode->addOutputPort(Type::FORLOOP);
     }
     // 克隆输入端口
     for (QBlueprintPort* port : this->inputPorts) {
-        QBlueprintPort* clonedPort = port->clone(); // 假设 QBlueprintPort 有一个 clone 方法
+        QBlueprintPort* clonedPort = port->clone();
         clonedPort->setParentItem(newNode); // 设置父项为新的 QBlueprintNode
         newNode->inputPorts.push_back(clonedPort);
     }
@@ -83,7 +101,6 @@ QRectF QBlueprintNode::boundingRect() const
             maxInputWidth = textWidth;
         }
     }
-
     // 计算输出端口名称的最大宽度
     int maxOutputWidth = 0;
     for (const auto& port : outputPorts)
@@ -96,7 +113,10 @@ QRectF QBlueprintNode::boundingRect() const
     }
 
     int padding = 80;
+    if(nodeType == Type::CONDITION)
+        maxInputWidth = 57;
     int nodeWidth = maxInputWidth + maxOutputWidth + padding;
+    int count = 0;
     int nodeHeight = std::max(inputPorts.size(), outputPorts.size()) * 31 + 31;
 
     if (nodeType == Type::INPUT)
@@ -164,6 +184,18 @@ QRectF QBlueprintNode::boundingRect() const
             break;
         }
     }
+    else if(nodeType == Type::CONDITION)
+    {
+        nodeWidth += 50;
+        for (size_t i = 0; i < inputPorts.size(); ++i) {
+            if(inputPorts[i]->name() == "E1" || inputPorts[i]->name() == "E2")
+                count ++;
+            else if(inputPorts[i]->name() == "Condition")
+                count +=2;
+        }
+        if(count > 2)
+            nodeHeight = std::max(inputPorts.size(), outputPorts.size()) * 31 + 31 + (count/2 - 1) * 20;
+    }
     return QRectF(0, 0, nodeWidth, nodeHeight);
 }
 
@@ -206,6 +238,36 @@ void QBlueprintNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
         imageNodePortSort();
     else
         customNodePortSort();
+}
+void QBlueprintNode::addButtonToTopLeft(enum Type type)
+
+{
+    // 创建 QPushButton
+    QPushButton* button = new QPushButton("+");
+    // 创建 QGraphicsProxyWidget 并将按钮嵌入其中
+    QGraphicsProxyWidget* buttonProxy = new QGraphicsProxyWidget(this);
+    // 设置按钮的大小，按钮应该是一个正方形以便显示成圆形
+    int buttonSize = 10;
+    button->setFixedSize(buttonSize, buttonSize);
+    // 使用样式表将按钮绘制成一个圆
+    button->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #2196F3;"  // 按钮背景颜色（蓝色）
+        "    color: white;"  // 按钮文字颜色（白色）
+        "    border: none;"  // 无边框
+        "    border-radius: 0px;"  // 设置圆角半径，半径为按钮尺寸的一半
+        "}"
+        "QPushButton:pressed {"
+        "    background-color: #45a049;"  // 点击时的背景颜色
+        "}"
+        );
+    buttonProxy->setWidget(button);
+    buttonProxy->setPos(25, 10);
+
+    // 设置按钮的点击事件
+    connect(button, &QPushButton::clicked, [this](){
+        addInputPortCondition(Type::CONDITION);
+    });
 }
 void QBlueprintNode::addButtonToTopLeft()
 {
@@ -289,13 +351,15 @@ void QBlueprintNode::addButtonToTopLeft()
             default:
                 break;
             }
-
         }
-
+        else if(nodeType == Type::CONDITION) // 添加条件
+        {
+            addInputPort(Type::CONDITION);
+            addOutputPort(Type::CONDITION);
+        }
         qDebug() << "Button clicked!";
     });
 }
-
 
 QBlueprintPort* QBlueprintNode::addInputPort()
 {
@@ -343,21 +407,106 @@ QBlueprintPort* QBlueprintNode::addOutputPort(const QString &name)
     outputPorts.push_back(port);
     return port;
 }
-QBlueprintPort* QBlueprintNode::addInputPort(enum Type Type)
+void QBlueprintNode::addInputPortCondition(enum Type Type)
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
+    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "Condition", dataType, this, getEnumName(dataType));
     port->setNodeType(nodeType);
     setQVariantType(port);
     inputPorts.push_back(port);
-    return port;
+    addOutputPort(Type);
+    customNodePortSort();
+    addOutputLabel(port, port);
+    if(inputPorts.size()>1)
+    {
+        addRadioButtonOptions(port);
+    }
+    port->setVarType(QVariant::fromValue(bool()));
 }
-QBlueprintPort* QBlueprintNode::addOutputPort(enum Type Type)
+
+void QBlueprintNode::addInputPort(enum Type Type)
 {
-    QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_OUTPUT, "", dataType, this, getEnumName(dataType));
-    port->setNodeType(nodeType);
-    setQVariantType(port);
-    outputPorts.push_back(port);
-    return port;
+    if(Type == Type::FUNCTION)
+    {
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
+        port->setNodeType(nodeType);
+        setQVariantType(port);
+        inputPorts.push_back(port);
+    }
+    else if(Type == Type::BRANCH)
+    {
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port_Condition = new QBlueprintPort(QBlueprintPort::Input, "Condition", DataType::BOOL, this, getEnumName(dataType));
+        port->setNodeType(nodeType);
+        setQVariantType(port);
+        port_Condition->setNodeType(nodeType);
+        setQVariantType(port_Condition);
+        inputPorts.push_back(port);
+        inputPorts.push_back(port_Condition);
+        customNodePortSort();
+        addOutputLabel(port, port);
+
+    }
+    else if(Type == Type::CONDITION)
+    {
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Input, "E1", dataType, this, getEnumName(dataType));
+        port->setNodeType(nodeType);
+        setQVariantType(port);
+        inputPorts.push_back(port);
+        customNodePortSort();
+        addOutputLabel(port, port);
+        QBlueprintPort *port2 = new QBlueprintPort(QBlueprintPort::Input, "E2", dataType, this, getEnumName(dataType));
+        port2->setNodeType(nodeType);
+        setQVariantType(port2);
+        inputPorts.push_back(port2);
+        customNodePortSort();
+        addOutputLabel(port2, port2);
+        addLineEdit(port, port2);
+        if(inputPorts.size()>2)
+            addRadioButtonOptions(port);
+        port->setVarType(QVariant::fromValue(int()));
+        port2->setVarType(QVariant::fromValue(int()));
+
+    }
+    else
+    {
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
+        port->setNodeType(nodeType);
+        setQVariantType(port);
+        inputPorts.push_back(port);
+    }
+}
+void QBlueprintNode::addOutputPort(enum Type Type)
+{
+    if(Type == Type::FUNCTION)
+    {
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_OUTPUT, "", dataType, this, getEnumName(dataType));
+        port->setNodeType(nodeType);
+        setQVariantType(port);
+        outputPorts.push_back(port);
+    }
+    else if(Type == Type::BRANCH)
+    {
+        QBlueprintPort *port_return_true = new QBlueprintPort(QBlueprintPort::EVENT_TRUE_RETURN, "True", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port_return_false = new QBlueprintPort(QBlueprintPort::EVENT_FALSE_RETURN, "False", dataType, this, getEnumName(dataType));
+        port_return_true->setNodeType(nodeType);
+        setQVariantType(port_return_true);
+        port_return_false->setNodeType(nodeType);
+        setQVariantType(port_return_false);
+        outputPorts.push_back(port_return_true);
+        outputPorts.push_back(port_return_false);
+        customNodePortSort();
+    }
+    else if(Type == Type::CONDITION)
+    {
+        if(outputPorts.size()==0)
+        {
+            QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, "Condition", dataType, this, getEnumName(dataType));
+            port->setNodeType(nodeType);
+            setQVariantType(port);
+            port->setVarType(QVariant::fromValue(bool()));
+            outputPorts.push_back(port);
+        }
+    }
 }
 
 QBlueprintPort *QBlueprintNode::addInputPort(const QString &name, const QString &brief)
@@ -492,18 +641,42 @@ void QBlueprintNode::setQVariantType(QBlueprintPort* port)
 }
 
 void QBlueprintNode::customNodePortSort() {
-    // 排列输入端口
-    for (size_t i = 0; i < inputPorts.size(); ++i) {
-        QFontMetrics fontMetrics(inputPorts[i]->m_font);
-        int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
-        inputPorts[i]->setPos(5, i * 30 + 40); // 左边距15，纵向位置
+    if(nodeType == Type::CONDITION)
+    {
+        // 排列输入端口
+        int count = 0;
+        for (size_t i = 0; i < inputPorts.size(); ++i) {
+            QFontMetrics fontMetrics(inputPorts[i]->m_font);
+            int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
+            inputPorts[i]->setPos(5, i * 30 + 40 + (count/2) * 20); // 左边距15，纵向位置
+            if(inputPorts[i]->name() == "E1" || inputPorts[i]->name() == "E2")
+                count ++;
+            else if(inputPorts[i]->name() == "Condition")
+                count +=2;
+        }
+        // 排列输出端口
+        for (size_t i = 0; i < outputPorts.size(); ++i) {
+            QFontMetrics fontMetrics(outputPorts[i]->m_font);
+            int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
+            outputPorts[i]->setPos(boundingRect().width() - 15, i * 60 + 40); // 右边距15
+        }
     }
-
-    // 排列输出端口
-    for (size_t i = 0; i < outputPorts.size(); ++i) {
-        QFontMetrics fontMetrics(outputPorts[i]->m_font);
-        int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
-        outputPorts[i]->setPos(boundingRect().width() - 15, i * 30 + 40); // 右边距15
+    else {
+        // 排列输入端口
+        for (size_t i = 0; i < inputPorts.size(); ++i) {
+            QFontMetrics fontMetrics(inputPorts[i]->m_font);
+            int inputTextWidth = fontMetrics.horizontalAdvance(inputPorts[i]->name());
+            inputPorts[i]->setPos(5, i * 30 + 40); // 左边距15，纵向位置
+        }
+        // 排列输出端口
+        for (size_t i = 0; i < outputPorts.size(); ++i) {
+            QFontMetrics fontMetrics(outputPorts[i]->m_font);
+            int outputTextWidth = fontMetrics.horizontalAdvance(outputPorts[i]->name());
+            if(nodeType == Type::CONDITION) // 条件节点的输出端口是需要间隔一个output的
+                outputPorts[i]->setPos(boundingRect().width() - 15, i * 60 + 40); // 右边距15
+            else
+                outputPorts[i]->setPos(boundingRect().width() - 15, i * 30 + 40); // 右边距15
+        }
     }
 }
 
@@ -549,6 +722,46 @@ void QBlueprintNode::imageNodePortSort() {
     }
 
 }
+void QBlueprintNode::addLineEdit(QBlueprintPort *port1, QBlueprintPort *port2)
+{
+    // 创建 QLineEdit
+    QLineEdit *lineEdit = new QLineEdit();
+    lineEdit->setPlaceholderText("条件");  // 设置提示文本
+    lineEdit->setStyleSheet("QLineEdit { border: 1px solid black; padding: 2px; }");  // 设置样式
+    lineEdit->resize(80, 20);
+
+    // 创建 QGraphicsProxyWidget 并将 lineEdit 添加到代理
+    QGraphicsProxyWidget *pMyProxy = new QGraphicsProxyWidget(this);
+    pMyProxy->setWidget(lineEdit);
+
+    // 设置 Z 值，确保控件显示在前景
+    pMyProxy->setZValue(10);
+
+    // 设置代理的位置
+    QPointF outputPortPos = port2->pos();
+    pMyProxy->setPos(outputPortPos.x() - lineEdit->width() + 233, (outputPortPos.y()) - 3);
+
+    // 将 lineEdit 添加到列表中
+    lineEdits.push_back(lineEdit);
+    relation.push_back("");  // 初始化为一个空的 QString，占据与该 lineEdit 对应的位置
+
+    // 使用 QRegularExpressionValidator 限制输入条件符号
+    QRegularExpression regex(R"(>|<|=|>=|<=|!=)");  // 允许的符号
+    QValidator *validator = new QRegularExpressionValidator(regex, this);
+    lineEdit->setValidator(validator);
+    int currentIndex = lineEdits.size() - 1;  // 当前 lineEdit 的索引
+    connect(lineEdit, &QLineEdit::textChanged, this, [=](const QString &text) {
+        QStringList allowedConditions = {">", "<", "=", ">=", "<=", "!="};
+        if (allowedConditions.contains(text.trimmed())) {
+            relation[currentIndex] = text.trimmed();  // 将输入的条件符号存入 relation 的对应位置
+            qDebug() << "输入条件符号：" << relation[currentIndex];
+            processData(nullptr, QVariant());
+        } else {
+            qDebug() << "无效输入，当前仅支持条件符号：" << allowedConditions;
+        }
+    });
+}
+
 
 void QBlueprintNode::addLineEdit(QBlueprintPort* port)
 {
@@ -695,7 +908,7 @@ void QBlueprintNode::addInputLabel(QBlueprintPort* port)
     });
 
     // 确保场景更新
-    scene()->update();
+    //scene()->update();
 }
 
 
@@ -717,7 +930,7 @@ void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inp
 
     // 设置较高的 Z 值，确保控件显示在前景
     pMyProxy->setZValue(10);
-    pLabel->setMinimumWidth(100);
+    pLabel->setMinimumWidth(50);
     pLabel->setMinimumHeight(10);
     QPointF outputPortPos = inport->pos();
     QFontMetrics fontMetrics(inport->m_font);
@@ -738,33 +951,167 @@ void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inp
         });
     }
     // 设置克隆的 QLineEdit 大小与原始的一致
+    else if(inport->name() == "Condition")
+        pMyProxy->resize(QSize(50, 20));
+    else if(nodeType == Type::BRANCH)
+        pMyProxy->resize(QSize(50, 20));
     else
         pMyProxy->resize(QSize(100, 20));
 
     // 添加克隆的 QLineEdit 到新的节点的 lineEdits 列表
     outputlabel.push_back(pLabel);
 }
+void QBlueprintNode::addRadioButtonOptions(QBlueprintPort *port)
+{
+    // 创建 QWidget 作为 QGraphicsProxyWidget 的容器
+    QWidget *containerWidget = new QWidget();
+    QHBoxLayout *layout = new QHBoxLayout(containerWidget);  // 使用水平布局管理器
 
-void QBlueprintNode::updateLabelWithData(QBlueprintPort* port, const QString& data) {
-    auto it = std::find(inputPorts.begin(), inputPorts.end(), port);
-    if (it != inputPorts.end()) {
-        int index = std::distance(inputPorts.begin(), it) - 1;
-        qDebug() << "outputlabel" << outputlabel.size() << "index" << index;
-        if (index < outputlabel.size()) {
-            QLabel* label = outputlabel[index];
-            label->setText(data);
-            scene()->update();  // 强制更新场景
+    // 设置布局的间距和边距
+    layout->setSpacing(5);  // 控件之间的间距
+    layout->setContentsMargins(0, 0, 0, 0);  // 去掉边距
+
+    // 创建两个 QRadioButton 用于选择 || 和 &&
+    QRadioButton *orOption = new QRadioButton("||");
+    QRadioButton *andOption = new QRadioButton("&&");
+
+    // 设置单选按钮的大小
+    orOption->setFixedSize(40, 20);
+    andOption->setFixedSize(40, 20);
+
+    // 默认选中 || 选项
+    orOption->setChecked(true);
+
+    // 初始化 radioButtonOptions 和 radioButtonValues
+    radioButtonOptions.push_back({orOption, andOption});
+    radioButtonValues.push_back("||");  // 默认选中 "||"
+
+    // 将单选按钮添加到布局
+    layout->addWidget(orOption);
+    layout->addWidget(andOption);
+
+    // 创建 QGraphicsProxyWidget 并将 containerWidget 添加到代理
+    QGraphicsProxyWidget *pMyProxy = new QGraphicsProxyWidget(this);
+    pMyProxy->setWidget(containerWidget);
+
+    // 设置代理的位置
+    QPointF portPos = port->pos();
+    pMyProxy->setPos(portPos.x(), portPos.y() - 30);  // 调整位置以适应布局
+
+    // 确保布局适合代理的大小
+    containerWidget->setLayout(layout);
+    containerWidget->setFixedSize(235, 20);  // 缩小容器的大小
+
+    int currentIndex = radioButtonOptions.size() - 1;  // 获取当前的索引
+    qDebug() << "radioButtonValues:" <<radioButtonValues.size();
+    // 连接单选按钮的信号到槽函数，用于处理选择的变化
+    connect(orOption, &QRadioButton::toggled, this, [=](bool checked) {
+        if (checked) {
+            radioButtonValues[currentIndex] = "||";  // 更新当前选项为 "||"
+            qDebug() << "选择了 || 选项";
+            processData(nullptr, QVariant());
+
         }
-    }
+    });
+
+    connect(andOption, &QRadioButton::toggled, this, [=](bool checked) {
+        if (checked) {
+            radioButtonValues[currentIndex] = "&&";  // 更新当前选项为 "&&"
+            qDebug() << "选择了 && 选项";
+            processData(nullptr, QVariant());
+
+        }
+    });
 }
 
+
 void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data) {
+    if (nodeType == Type::CONDITION) // condition节点需要计算出bool值出来
+    {
+        QVariant result;
+        bool result_bool;
+        int count = 0;
+        int radioButtonindex = 0;
+        int relationindex = 0;
+        partbool.clear();
+        for(int i = 0;i < inputPorts.size(); i++)
+        {
+            if(inputPorts[i]->name() == "E1")
+            {
+                bool E_bool = false;
+                qDebug() << "inputPorts[i]->name()" << inputPorts[i]->name();
+                QString relationSymbol = relation[relationindex]; // 获取当前的关系符号
+                QVariant data1 = inputPorts[i]->data();
+                QVariant data2 = inputPorts[i+1]->data();
+                if (data1.canConvert<double>() && data2.canConvert<double>()) {
+                    double value1 = data1.toDouble();
+                    double value2 = data2.toDouble();
+                    if (relationSymbol == ">") {
+                        E_bool = value1 > value2;
+                    } else if (relationSymbol == "<") {
+                        E_bool = value1 < value2;
+                    } else if (relationSymbol == "=") {
+                        E_bool = value1 == value2;
+                    } else if (relationSymbol == ">=") {
+                        E_bool = value1 >= value2;
+                    } else if (relationSymbol == "<=") {
+                        E_bool = value1 <= value2;
+                    } else if (relationSymbol == "!=") {
+                        E_bool = value1 != value2;
+                    }
+                    else {
+                        qDebug() << "Value1:" << value1 << "Value2:" << value2 << "Relation:" << relationSymbol << "E_bool:" << E_bool;
+                        break;
+                    }
+                } else {
+                    qDebug() << "无法比较非数值类型数据";
+                }
+                partbool.push_back(E_bool);
+                relationindex++;
+            }
+            else if(inputPorts[i]->name() == "Condition")
+            {
+                QVariant data = inputPorts[i]->data();
+                data.canConvert<bool>();
+                bool condition = data.toBool();
+                partbool.push_back(condition);
+            }
+            else
+                continue;
+        }
+        qDebug() << "partbool.size()" << partbool.size();
+        if(partbool.size() != 0)
+            result_bool = partbool[0];
+        for(int i = 0;i< partbool.size()-1;i++)
+        {
+            if(partbool.size() == 0)
+                break;
+            if(radioButtonValues[radioButtonindex] == "||")
+                result_bool = result_bool || partbool[i+1];
+            else if(radioButtonValues[radioButtonindex] == "&&")
+                result_bool = result_bool && partbool[i+1];
+            radioButtonindex ++;
+        }
+        result = result_bool;
+        for (QBlueprintPort* outputPort : outputPorts) {
+            if (outputPort) {
+                outputPort->setVarType(result_bool); // 设置布尔值到输出端口
+                outputPort->sendDataToConnectedPorts(); // 发送数据给连接的下一个端口
+            }
+        }
+
+        qDebug() << "Condition result:" << result_bool;
+    }
     // 根据 inputPort 来判断需要处理的逻辑
-    qDebug() << "节点" << m_name << "接收到数据:" << data << "从端口:" << inputPort->name();
+    //qDebug() << "节点" << m_name << "接收到数据:" << data << "从端口:" << inputPort->name();
     // 如果有对应的 QLabel 需要更新（例如在 inputPort 上有 QLabel）
     auto it = std::find(inputPorts.begin(), inputPorts.end(), inputPort);
     if (it != inputPorts.end()) {
-        int index = std::distance(inputPorts.begin(), it) - 1;
+        int index = 0;
+        if(nodeType == Type::CONDITION)
+            index = std::distance(inputPorts.begin(), it);
+        else
+            index = std::distance(inputPorts.begin(), it) - 1;
         if ((index < outputlabel.size()) /*&& isPortConnected(inputPort, outputPorts[index])*/) {
             QLabel* label = outputlabel[index];
             if (inputPort->portDataType() == DataType::QIMAGE && data.canConvert<QImage>()) {
@@ -789,22 +1136,26 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
 #endif
     else if(class_name == "Qts")
         result = qtsFunctions();
-    if(inputPort->getNodeType() == Type::FUNCTION)
-        for (QBlueprintPort* outputPort : outputPorts) {
-            if (outputPort) {
-                outputPort->setVarType(result); // 更新输出端口的 var
-                outputPort->sendDataToConnectedPorts(); // 发送数据到连接的下一个端口
+    if(inputPort != nullptr)
+    {
+        if(inputPort->getNodeType() == Type::FUNCTION)
+            for (QBlueprintPort* outputPort : outputPorts) {
+                if (outputPort) {
+                    outputPort->setVarType(result); // 更新输出端口的 var
+                    outputPort->sendDataToConnectedPorts(); // 发送数据到连接的下一个端口
+                }
             }
-        }
-    // 处理数据的逻辑，将数据传递给 outputPort
-    else
-        for (QBlueprintPort* outputPort : outputPorts) {
-            if (outputPort && isPortConnected(inputPort, outputPort)) {
-                qDebug() << "the data:" << data;
-                outputPort->setVarType(data);  // 更新 outputPort 的数据
-                outputPort->sendDataToConnectedPorts();  // 通过 outputPort 发送数据给下一个端口
+        // 处理数据的逻辑，将数据传递给 outputPort
+        else
+            for (QBlueprintPort* outputPort : outputPorts) {
+                if (outputPort && isPortConnected(inputPort, outputPort)) {
+                    qDebug() << "the data:" << data;
+                    outputPort->setVarType(data);  // 更新 outputPort 的数据
+                    outputPort->sendDataToConnectedPorts();  // 通过 outputPort 发送数据给下一个端口
+                }
             }
-        }
+    }
+
 
 }
 bool QBlueprintNode::isPortConnected(QBlueprintPort* inputPort, QBlueprintPort* outputPort) {
@@ -897,7 +1248,19 @@ QVariant QBlueprintNode::qtsFunctions()
 
     return result;
 }
+void QBlueprintNode::addLabelToPort(QBlueprintPort* port, const QString &text)
+{
+    QLabel* label = new QLabel(text);
+    label->setStyleSheet("QLabel { border: 1px solid black; padding: 2px; }");
 
+    QGraphicsProxyWidget* proxy = new QGraphicsProxyWidget(this);
+    proxy->setWidget(label);
+
+    QPointF portPos = port->pos();
+    proxy->setPos(portPos.x() - 70, portPos.y() - 5);
+
+    inputlabel.push_back(label);
+}
 #ifdef OPENCV_FOUND
 QVariant QBlueprintNode::opencvFunctions()
 {
