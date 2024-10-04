@@ -435,13 +435,16 @@ void QBlueprintNode::addInputPort(enum Type Type)
     else if(Type == Type::BRANCH)
     {
         QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
-        QBlueprintPort *port_Condition = new QBlueprintPort(QBlueprintPort::Input, "Condition", dataType, this, getEnumName(dataType));
+        QBlueprintPort *port_Condition = new QBlueprintPort(QBlueprintPort::Input, "Condition", DataType::BOOL, this, getEnumName(dataType));
         port->setNodeType(nodeType);
         setQVariantType(port);
         port_Condition->setNodeType(nodeType);
         setQVariantType(port_Condition);
         inputPorts.push_back(port);
         inputPorts.push_back(port_Condition);
+        customNodePortSort();
+        addOutputLabel(port, port);
+
     }
     else if(Type == Type::CONDITION)
     {
@@ -491,6 +494,7 @@ void QBlueprintNode::addOutputPort(enum Type Type)
         setQVariantType(port_return_false);
         outputPorts.push_back(port_return_true);
         outputPorts.push_back(port_return_false);
+        customNodePortSort();
     }
     else if(Type == Type::CONDITION)
     {
@@ -948,6 +952,8 @@ void QBlueprintNode::addOutputLabel(QBlueprintPort *outport, QBlueprintPort *inp
     }
     // 设置克隆的 QLineEdit 大小与原始的一致
     else if(inport->name() == "Condition")
+        pMyProxy->resize(QSize(50, 20));
+    else if(nodeType == Type::BRANCH)
         pMyProxy->resize(QSize(50, 20));
     else
         pMyProxy->resize(QSize(100, 20));
