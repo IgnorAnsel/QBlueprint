@@ -368,7 +368,9 @@ void QBlueprint::mouseReleaseEvent(QMouseEvent *event)
         if(targetPort)
         {
             if((targetPort->portType() == QBlueprintPort::EVENT_INPUT && m_currentConnection->startPort()->portType() == QBlueprintPort::EVENT_OUTPUT)
-                ||(targetPort->portType() == QBlueprintPort::EVENT_OUTPUT && m_currentConnection->startPort()->portType() == QBlueprintPort::EVENT_INPUT))
+                ||(targetPort->portType() == QBlueprintPort::EVENT_OUTPUT && m_currentConnection->startPort()->portType() == QBlueprintPort::EVENT_INPUT)
+                ||(targetPort->portType() == QBlueprintPort::EVENT_INPUT && m_currentConnection->startPort()->portType() == QBlueprintPort::EVENT_FALSE_RETURN)
+                ||(targetPort->portType() == QBlueprintPort::EVENT_INPUT && m_currentConnection->startPort()->portType() == QBlueprintPort::EVENT_TRUE_RETURN))
             {
                 qDebug() << "事件端口连接";
                 m_currentConnection->setEndPort(targetPort);
@@ -514,6 +516,20 @@ bool QBlueprint::isEventPortConnected(QBlueprintPort* outputPort, QBlueprintPort
              connection->startPort()->portType() == QBlueprintPort::EVENT_INPUT &&
              connection->endPort()->portType() == QBlueprintPort::EVENT_OUTPUT)) {
             return true;
+        }
+        else if((connection->startPort()->data() == "true" && connection->startPort()->portType() == QBlueprintPort::EVENT_TRUE_RETURN
+                   && connection->endPort()->portType() == QBlueprintPort::EVENT_INPUT)||
+                   (connection->startPort()->data() == "true" && connection->startPort()->portType() == QBlueprintPort::EVENT_INPUT
+                       && connection->endPort()->portType() == QBlueprintPort::EVENT_TRUE_RETURN)){
+            return true;
+            qDebug() << "true";
+        }
+        else if((connection->startPort()->data() == "false" && connection->startPort()->portType() == QBlueprintPort::EVENT_FALSE_RETURN
+                    && connection->endPort()->portType() == QBlueprintPort::EVENT_INPUT)||
+                   (connection->startPort()->data() == "false" && connection->startPort()->portType() == QBlueprintPort::EVENT_INPUT
+                    && connection->endPort()->portType() == QBlueprintPort::EVENT_FALSE_RETURN)){
+            return true;
+            qDebug() << "false";
         }
     }
     return false;
