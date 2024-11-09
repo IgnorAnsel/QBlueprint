@@ -46,8 +46,87 @@ void QBlueprint::createBlueprintNodes() // 使用工厂方法基于函数生成�
     QBlueprintNode* qts_getpoint_y_node = QNodeFactory::createNodeFromFunction(this, &Qts::getQPoint_Y, "getQPoint_Y", "Qts");
 
 #ifdef OPENCV_FOUND
-    QBlueprintNode* opencv_threshold_node = QNodeFactory::createNodeFromFunction(this, &opencv::threshold, "threshold", "opencv");
-    QBlueprintNode* opencv_convertToGray_node = QNodeFactory::createNodeFromFunction(this, &opencv::convertToGray, "convertToGray", "opencv");
+    QBlueprintNode* opencv_threshold_node = QNodeFactory::createNodeFromFunction(this, &opencv::threshold, opencv::inputNames_threshold,opencv::outputName_threshold,"threshold", "opencv");
+    QBlueprintNode* opencv_BGRtoGRAY_node = QNodeFactory::createNodeFromFunction(
+        this,
+        &opencv::BGRtoGRAY,
+        opencv::inputNames_BGRtoGRAY,
+        opencv::outputName_BGRtoGRAY,
+        "BGRtoGRAY",
+        "opencv");
+    QBlueprintNode* opencv_BGRtoHSV_node = QNodeFactory::createNodeFromFunction(
+        this,
+        &opencv::BGRtoHSV,
+        opencv::inputNames_BGRtoHSV,
+        opencv::outputName_BGRtoHSV,
+        "BGRtoHSV",
+        "opencv");
+    QBlueprintNode* opencv_erode_node = QNodeFactory::createNodeFromFunction(
+        this,
+        &opencv::erode,
+        opencv::inputNames_erode,
+        opencv::outputName_erode,
+        "erode",
+        "opencv"
+        );
+    QBlueprintNode* opencv_dilate_node = QNodeFactory::createNodeFromFunction(
+        this,
+        &opencv::dilate,
+        opencv::inputNames_dilate,
+        opencv::outputName_dilate,
+        "dilate",
+        "opencv"
+        );
+    QBlueprintNode* opencv_canny_node = QNodeFactory::createNodeFromFunction(
+        this,
+        &opencv::canny,
+        opencv::inputNames_canny,
+        opencv::outputName_canny,
+        "canny",
+        "opencv"
+        );
+    QBlueprintNode* opencv_gaussianblur_node = QNodeFactory::createNodeFromFunction(
+        this,
+        &opencv::gaussianblur,
+        opencv::inputNames_gaussianblur,
+        opencv::outputName_gaussianblur,
+        "gaussianblur",
+        "opencv"
+        );
+    QBlueprintNode* opencv_rotateandincline_node = QNodeFactory::createNodeFromFunction(
+        this,
+        &opencv::rotateandincline,
+        opencv::inputNames_rotateandincline,
+        opencv::outputName_rotateandincline,
+        "rotateandincline",
+        "opencv"
+        );
+    QBlueprintNode* opencv_per_trans_node = QNodeFactory::createNodeFromFunction(
+        this,
+        &opencv::per_trans,
+        opencv::inputNames_per_trans,
+        opencv::outputName_per_trans,
+        "per_trans",
+        "opencv"
+        );
+    QBlueprintNode* opencv_resize_node = QNodeFactory::createNodeFromFunction(
+        this,
+        &opencv::resize,
+        opencv::inputNames_resize,
+        opencv::outputName_resize,
+        "resize",
+        "opencv"
+        );
+    QBlueprintNode* opencv_line_node = QNodeFactory::createNodeFromFunction(
+        this,
+        &opencv::line,
+        opencv::inputNames_line,
+        opencv::outputName_Bline,
+        "line",
+        "opencv"
+        );
+
+    //QBlueprintNode* opencv_convertToGray_node = QNodeFactory::createNodeFromFunction(this, &opencv::convertToGray, "convertToGray", "opencv");
 #endif
     classifyNodes();
 }

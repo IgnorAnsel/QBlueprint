@@ -1265,15 +1265,82 @@ void QBlueprintNode::addLabelToPort(QBlueprintPort* port, const QString &text)
 QVariant QBlueprintNode::opencvFunctions()
 {
     QVariant result;
-    if(m_name == "threshold")
+    if (m_name == "threshold") {
         result = opencv::threshold(inputPorts[1]->data().value<QImage>(),
                                    inputPorts[2]->data().toDouble(),
                                    inputPorts[3]->data().toDouble(),
                                    inputPorts[4]->data().toInt());
-    else if(m_name == "convertToGray")
-    {
-        result = opencv::convertToGray(inputPorts[1]->data().value<QImage>());
     }
+    else if (m_name == "BGRtoHSV") {
+        result = opencv::BGRtoHSV(inputPorts[1]->data().value<QImage>());  // BGR 转 HSV
+    }
+//    else if (m_name == "HSVtoBGR") {
+//        result = opencv::convertColor(inputPorts[1]->data().value<QImage>());  // HSV 转 BGR
+//    }
+    else if (m_name == "BGRtoGRAY") {
+        result = opencv::BGRtoGRAY(inputPorts[1]->data().value<QImage>());  // BGR 转 灰度
+    }
+//    else if (m_name == "RGBtoBGR") {
+//        result = opencv::convertColor(inputPorts[1]->data().value<QImage>(),
+//                                      cv::COLOR_RGB2BGR);  // RGB 转 BGR
+//    }
+//    else if (m_name == "RGBtoHSV") {
+//        result = opencv::convertColor(inputPorts[1]->data().value<QImage>(),
+//                                      cv::COLOR_RGB2HSV);  // RGB 转 HSV
+//    }
+//    else if (m_name == "HSVtoRGB") {
+//        result = opencv::convertColor(inputPorts[1]->data().value<QImage>(),
+//                                      cv::COLOR_HSV2RGB);  // HSV 转 RGB
+//    }
+    else if (m_name == "erode") {
+        result = opencv::erode(inputPorts[1]->data().value<QImage>(),
+                               inputPorts[2]->data().toInt(),
+                               inputPorts[3]->data().toInt());
+    }
+    else if (m_name == "dilate") {
+        result = opencv::dilate(inputPorts[1]->data().value<QImage>(),
+                                inputPorts[2]->data().toInt(),
+                                inputPorts[3]->data().toInt());
+    }
+    else if (m_name == "canny") {
+        result = opencv::canny(inputPorts[1]->data().value<QImage>(),
+                               inputPorts[2]->data().toInt(),
+                               inputPorts[3]->data().toInt());
+    }
+    else if (m_name == "gaussianblur") {
+        result = opencv::gaussianblur(inputPorts[1]->data().value<QImage>(),
+                                      inputPorts[2]->data().toInt(),
+                                      inputPorts[3]->data().toInt(),
+                                      inputPorts[4]->data().toInt(),
+                                      inputPorts[5]->data().toInt());
+    }
+    else if (m_name == "rotateandincline") {
+        result = opencv::rotateandincline(inputPorts[1]->data().value<QImage>(),
+                                          inputPorts[2]->data().value<QPoint>(),
+                                          inputPorts[3]->data().toDouble(),
+                                          inputPorts[4]->data().toDouble());
+    }
+    else if (m_name == "per_trans") {
+        result = opencv::per_trans(inputPorts[1]->data().value<QImage>(),
+                                   inputPorts[2]->data().value<QPoint>(),
+                                   inputPorts[3]->data().value<QPoint>(),
+                                   inputPorts[4]->data().value<QPoint>(),
+                                   inputPorts[5]->data().value<QPoint>(),
+                                   inputPorts[6]->data().value<QVector2D>());
+    }
+    else if (m_name == "resize") {
+        result = opencv::resize(inputPorts[1]->data().value<QImage>(),
+                                inputPorts[2]->data().toDouble(),
+                                inputPorts[3]->data().toDouble());
+    }
+    else if (m_name == "line") {
+        result = opencv::line(inputPorts[1]->data().value<QImage>(),
+                              inputPorts[2]->data().value<QPoint>(),
+                              inputPorts[3]->data().value<QPoint>(),
+                              inputPorts[4]->data().value<QColor>(),
+                              inputPorts[5]->data().toInt());
+    }
+
     return result;
 }
 #endif
