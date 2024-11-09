@@ -8,6 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(OpenCV_DIR D:/opencv/opencv/new)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
@@ -60,6 +61,8 @@ else()
 endif()
 
 target_link_libraries(QBlueprint PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 if(OpenCV_FOUND)
     target_link_libraries(QBlueprint PRIVATE ${OpenCV_LIBS})
     target_compile_definitions(QBlueprint PRIVATE OPENCV_FOUND)
