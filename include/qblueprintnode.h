@@ -29,6 +29,9 @@ class QBlueprintNode : public QObject, public QGraphicsItem
 public:
 
     QBlueprintNode(enum Type Type,DataType datatype = DataType::FOR_FUNCTION, QGraphicsItem *parent = nullptr);
+
+    void setupForLoopPorts();
+
     ~QBlueprintNode();
     // 重载boundingRect()方法，定义绘制区域
     QRectF boundingRect() const override;
@@ -64,9 +67,19 @@ public:
     // 数据类型管理方法
     void addDataType(DataType type) { dataTypes.push_back(type); }
     const std::vector<DataType>& getDataTypes() const { return dataTypes; }
+
+    QVariant getPortValue(const QString &portName);
+
+    void setPortValue(const QString &portName, const QVariant &value);
+
     void processData(QBlueprintPort *inputPort, const QVariant &data);
     bool isPortConnected(QBlueprintPort *inputPort, QBlueprintPort *outputPort);
     void addRadioButtonOptions(QBlueprintPort *port);
+
+    void processForLoopData(QBlueprintPort *inputPort, const QVariant &data);
+
+    void executeForLoopIteration(int index, int end, int step);
+
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 

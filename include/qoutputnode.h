@@ -1,7 +1,7 @@
 #ifndef QOUTPUTNODE_H
 #define QOUTPUTNODE_H
 
-#include "qblueprintnode.h"
+#include "../qblueprintnode.h"
 #include <QLineEdit>
 #include <QFont>
 #include <QFontMetrics>

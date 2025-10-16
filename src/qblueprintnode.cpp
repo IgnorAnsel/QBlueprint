@@ -24,6 +24,16 @@ QBlueprintNode::QBlueprintNode(enum Type Type, DataType datatype, QGraphicsItem 
     else
         addButtonToTopLeft();
 }
+
+void QBlueprintNode::setupForLoopPorts()
+{
+    if (nodeType != Type::FORLOOP) return;
+
+    // 事件端口
+    addInputPort(Type::FORLOOP);  // 事件输入
+    addOutputPort(Type::FORLOOP); // 事件输出（每次循环执行）
+}
+
 QBlueprintNode::~QBlueprintNode()
 {
     // 删除节点时，移除所有连接
@@ -467,6 +477,37 @@ void QBlueprintNode::addInputPort(enum Type Type)
         port2->setVarType(QVariant::fromValue(int()));
 
     }
+    else if(Type == Type::FORLOOP)  // 添加FORLOOP处理
+    {
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
+        port->setNodeType(nodeType);
+        setQVariantType(port);
+        inputPorts.push_back(port);
+
+        // 添加循环控制端口
+        QBlueprintPort *startPort = new QBlueprintPort(QBlueprintPort::Input, "Start", DataType::INT, this, "循环起始值");
+        QBlueprintPort *endPort = new QBlueprintPort(QBlueprintPort::Input, "End", DataType::INT, this, "循环结束值");
+        QBlueprintPort *stepPort = new QBlueprintPort(QBlueprintPort::Input, "Step", DataType::INT, this, "循环步长");
+
+        startPort->setNodeType(nodeType);
+        endPort->setNodeType(nodeType);
+        stepPort->setNodeType(nodeType);
+
+        setQVariantType(startPort);
+        setQVariantType(endPort);
+        setQVariantType(stepPort);
+
+        // 设置默认值
+        startPort->setVarType(QVariant::fromValue(0));
+        endPort->setVarType(QVariant::fromValue(10));
+        stepPort->setVarType(QVariant::fromValue(1));
+
+        inputPorts.push_back(startPort);
+        inputPorts.push_back(endPort);
+        inputPorts.push_back(stepPort);
+
+        customNodePortSort();
+    }
     else
     {
         QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
@@ -506,6 +547,78 @@ void QBlueprintNode::addOutputPort(enum Type Type)
             port->setVarType(QVariant::fromValue(bool()));
             outputPorts.push_back(port);
         }
+    }
+    else if(Type == Type::FORLOOP)  // 添加FORLOOP处理
+    {
+        qDebug() << "=== setupForLoopPorts() called ===";
+
+    if (nodeType != Type::FORLOOP) {
+        qDebug() << "Not a FORLOOP node, skipping";
+        return;
+    }
+
+    // 清空现有端口
+    inputPorts.clear();
+    outputPorts.clear();
+
+    qDebug() << "Creating ForLoop ports...";
+
+    // 创建事件输入端口
+    QBlueprintPort* eventInput = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "Execute", DataType::BOOL, this, "触发循环执行");
+    eventInput->setNodeType(nodeType);
+    eventInput->setVarType(QVariant::fromValue(false));
+    inputPorts.push_back(eventInput);
+    qDebug() << "Created event input port: Execute";
+
+    // 创建数据输入端口
+    QBlueprintPort* startPort = new QBlueprintPort(QBlueprintPort::Input, "Start", DataType::INT, this, "循环起始值");
+    startPort->setNodeType(nodeType);
+    startPort->setVarType(QVariant::fromValue(0));
+    inputPorts.push_back(startPort);
+    qDebug() << "Created Start port with value: 0";
+
+    QBlueprintPort* endPort = new QBlueprintPort(QBlueprintPort::Input, "End", DataType::INT, this, "循环结束值");
+    endPort->setNodeType(nodeType);
+    endPort->setVarType(QVariant::fromValue(10));
+    inputPorts.push_back(endPort);
+    qDebug() << "Created End port with value: 10";
+
+    QBlueprintPort* stepPort = new QBlueprintPort(QBlueprintPort::Input, "Step", DataType::INT, this, "循环步长");
+    stepPort->setNodeType(nodeType);
+    stepPort->setVarType(QVariant::fromValue(1));
+    inputPorts.push_back(stepPort);
+    qDebug() << "Created Step port with value: 1";
+
+    // 创建迭代间隔端口（替换IterationDone）
+    QBlueprintPort* intervalPort = new QBlueprintPort(QBlueprintPort::Input, "Interval", DataType::INT, this, "迭代间隔(ms)");
+    intervalPort->setNodeType(nodeType);
+    intervalPort->setVarType(QVariant::fromValue(1000)); // 默认1秒
+    inputPorts.push_back(intervalPort);
+    qDebug() << "Created Interval port with value: 1000ms";
+
+    // 创建事件输出端口
+    QBlueprintPort* eventOutput = new QBlueprintPort(QBlueprintPort::EVENT_OUTPUT, "LoopBody", DataType::BOOL, this, "循环体执行");
+    eventOutput->setNodeType(nodeType);
+    eventOutput->setVarType(QVariant::fromValue(false));
+    outputPorts.push_back(eventOutput);
+    qDebug() << "Created event output port: LoopBody";
+
+    // 创建数据输出端口
+    QBlueprintPort* indexPort = new QBlueprintPort(QBlueprintPort::Output, "Index", DataType::INT, this, "当前循环索引");
+    indexPort->setNodeType(nodeType);
+    indexPort->setVarType(QVariant::fromValue(0));
+    outputPorts.push_back(indexPort);
+    qDebug() << "Created Index port with initial value: 0";
+
+    QBlueprintPort* completedPort = new QBlueprintPort(QBlueprintPort::Output, "Completed", DataType::BOOL, this, "循环完成标志");
+    completedPort->setNodeType(nodeType);
+    completedPort->setVarType(QVariant::fromValue(false));
+    outputPorts.push_back(completedPort);
+    qDebug() << "Created Completed port with initial value: false";
+
+    qDebug() << "Port creation completed. Input ports:" << inputPorts.size()
+             << "Output ports:" << outputPorts.size();
+    customNodePortSort();
     }
 }
 
@@ -641,6 +754,43 @@ void QBlueprintNode::setQVariantType(QBlueprintPort* port)
 }
 
 void QBlueprintNode::customNodePortSort() {
+    if (nodeType == Type::FORLOOP) {
+        // ForLoop节点的特殊布局
+        int yPos = 40;
+
+        // 事件端口放在顶部
+        for (size_t i = 0; i < inputPorts.size(); ++i) {
+            if (inputPorts[i]->portType() == QBlueprintPort::EVENT_INPUT) {
+                inputPorts[i]->setPos(5, yPos);
+                yPos += 30;
+            }
+        }
+
+        yPos = 40;
+        for (size_t i = 0; i < outputPorts.size(); ++i) {
+            if (outputPorts[i]->portType() == QBlueprintPort::EVENT_OUTPUT) {
+                outputPorts[i]->setPos(boundingRect().width() - 15, yPos);
+                yPos += 30;
+            }
+        }
+
+        // 数据端口放在下面
+        int dataYPos = 100;
+        for (size_t i = 0; i < inputPorts.size(); ++i) {
+            if (inputPorts[i]->portType() != QBlueprintPort::EVENT_INPUT) {
+                inputPorts[i]->setPos(5, dataYPos);
+                dataYPos += 30;
+            }
+        }
+
+        dataYPos = 100;
+        for (size_t i = 0; i < outputPorts.size(); ++i) {
+            if (outputPorts[i]->portType() != QBlueprintPort::EVENT_OUTPUT) {
+                outputPorts[i]->setPos(boundingRect().width() - 15, dataYPos);
+                dataYPos += 30;
+            }
+        }
+    }
     if(nodeType == Type::CONDITION)
     {
         // 排列输入端口
@@ -1024,8 +1174,187 @@ void QBlueprintNode::addRadioButtonOptions(QBlueprintPort *port)
     });
 }
 
+void QBlueprintNode::processForLoopData(QBlueprintPort* inputPort, const QVariant& data)
+{
+    qDebug() << "=== processForLoopData called ===";
+    qDebug() << "Input port:" << (inputPort ? inputPort->name() : "nullptr");
+    qDebug() << "Data:" << data;
 
+    static int currentIndex = 0;
+    static bool loopActive = false;
+    static int startValue = 0;
+    static int endValue = 0;
+    static int stepValue = 1;
+    static int intervalMs = 1000;
+    static QTimer* iterationTimer = nullptr;
+
+    // 如果是Execute端口被触发，开始循环
+    if (inputPort && inputPort->name() == "Execute") {
+        qDebug() << "Execute event triggered, starting loop...";
+
+        // 获取端口值
+        startValue = getPortValue("Start").toInt();
+        endValue = getPortValue("End").toInt();
+        stepValue = getPortValue("Step").toInt();
+        intervalMs = getPortValue("Interval").toInt();
+
+        qDebug() << "Loop parameters - Start:" << startValue << "End:" << endValue
+                 << "Step:" << stepValue << "Interval:" << intervalMs << "ms";
+
+        if (stepValue == 0) {
+            qDebug() << "Warning: Step is 0, setting to 1";
+            stepValue = 1;
+        }
+
+        if (intervalMs <= 0) {
+            qDebug() << "Warning: Interval is" << intervalMs << "ms, setting to 100ms";
+            intervalMs = 100;
+        }
+
+        currentIndex = startValue;
+        loopActive = true;
+
+        qDebug() << "Starting loop with index:" << currentIndex;
+
+        // 创建定时器（如果不存在）
+        if (!iterationTimer) {
+            iterationTimer = new QTimer(this);
+            iterationTimer->setSingleShot(true);
+            connect(iterationTimer, &QTimer::timeout, [=]() {
+                if (loopActive) {
+                    // 自动进行下一次迭代
+                    currentIndex += stepValue;
+                    qDebug() << "Timer triggered, next index:" << currentIndex;
+
+                    if ((stepValue > 0 && currentIndex <= endValue) || (stepValue < 0 && currentIndex >= endValue)) {
+                        qDebug() << "Continuing to next iteration";
+                        executeForLoopIteration(currentIndex, endValue, stepValue);
+
+                        // 重新启动定时器
+                        iterationTimer->start(intervalMs);
+                    } else {
+                        // 循环结束
+                        qDebug() << "Loop completed";
+                        loopActive = false;
+                        setPortValue("Completed", true);
+                        qDebug() << "Set Completed to true";
+                    }
+                }
+            });
+        }
+
+        // 开始第一次循环
+        executeForLoopIteration(currentIndex, endValue, stepValue);
+
+        // 启动定时器进行下一次迭代
+        iterationTimer->start(intervalMs);
+    }
+    // 如果是Interval端口值改变，更新间隔时间
+    else if (inputPort && inputPort->name() == "Interval") {
+        qDebug() << "Interval value changed:" << data.toInt() << "ms";
+        intervalMs = data.toInt();
+
+        if (iterationTimer && iterationTimer->isActive()) {
+            qDebug() << "Restarting timer with new interval:" << intervalMs << "ms";
+            iterationTimer->start(intervalMs);
+        }
+    }
+    // 如果是Stop端口被触发，停止循环
+    else if (inputPort && inputPort->name() == "Stop") {
+        qDebug() << "Stop event received";
+        loopActive = false;
+        if (iterationTimer) {
+            iterationTimer->stop();
+        }
+        qDebug() << "Loop stopped";
+    }
+}
+
+void QBlueprintNode::executeForLoopIteration(int index, int end, int step)
+{
+    qDebug() << "Executing loop iteration - Index:" << index << "End:" << end << "Step:" << step;
+
+    // 设置当前索引值
+    setPortValue("Index", index);
+    qDebug() << "Set Index to:" << index;
+    for (QBlueprintPort* port : outputPorts) {
+        if (port->name() == "Index") {
+            port->sendDataToConnectedPorts(); // 关键！立即发送数据
+            qDebug() << "Index数据已发送到所有连接的端口";
+            break;
+        }
+    }
+    // 触发循环体执行
+    for (QBlueprintPort* outputPort : outputPorts) {
+        if (outputPort->name() == "LoopBody") {
+            qDebug() << "Triggering loop body execution for index:" << index;
+            outputPort->setVarType(QVariant::fromValue(true));
+            outputPort->sendDataToConnectedPorts();
+            break;
+        }
+    }
+
+    qDebug() << "ForLoop iteration" << index << "executed";
+}
+
+
+QVariant QBlueprintNode::getPortValue(const QString& portName)
+{
+    // 查找输入端口
+    for (QBlueprintPort* port : inputPorts) {
+        if (port->name() == portName) {
+            QVariant data = port->data();
+            qDebug() << "Getting port" << portName << "value:" << data << "type:" << data.typeName();
+            return data;
+        }
+    }
+
+    // 查找输出端口
+    for (QBlueprintPort* port : outputPorts) {
+        if (port->name() == portName) {
+            QVariant data = port->data();
+            qDebug() << "Getting port" << portName << "value:" << data << "type:" << data.typeName();
+            return data;
+        }
+    }
+
+    qDebug() << "Port" << portName << "not found";
+    return QVariant(); // 返回无效的QVariant
+}
+
+void QBlueprintNode::setPortValue(const QString& portName, const QVariant& value)
+{
+    qDebug() << "Setting port" << portName << "to value:" << value << "type:" << value.typeName();
+
+    // 查找输入端口
+    for (QBlueprintPort* port : inputPorts) {
+        if (port->name() == portName) {
+            port->setVarType(value);
+            qDebug() << "Successfully set input port" << portName;
+            return;
+        }
+    }
+
+    // 查找输出端口
+    for (QBlueprintPort* port : outputPorts) {
+        if (port->name() == portName) {
+            port->setVarType(value);
+            qDebug() << "Successfully set output port" << portName;
+            return;
+        }
+    }
+
+    qDebug() << "Port" << portName << "not found for setting value";
+}
 void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data) {
+    qDebug() << "=== processData called ===";
+    qDebug() << "Input port:" << (inputPort ? inputPort->name() : "nullptr");
+    qDebug() << "Data:" << data;
+
+    if (nodeType == Type::FORLOOP) {
+        processForLoopData(inputPort, data);
+        return;
+    }
     if (nodeType == Type::CONDITION) // condition节点需要计算出bool值出来
     {
         QVariant result;

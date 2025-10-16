@@ -4,7 +4,6 @@
 #include <QMainWindow>
 #include "qblueprint.h"
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
@@ -13,10 +12,10 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow(QWidget *parent = nullptr);
+    QBlueprint* getBlueprint() const { return blueprint; }
     ~MainWindow();
 
 private:
     QBlueprint *blueprint;
-    Ui::MainWindow *ui;
 };
 #endif // MAINWINDOW_H

@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(QBlueprint VERSION 0.1 LANGUAGES CXX)
-
+set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda-11.8")  # 你的 CUDA 安装路径
+set(CUDA_INCLUDE_DIRS "${CUDA_TOOLKIT_ROOT_DIR}/include")
+set(CUDA_CUDART_LIBRARY "${CUDA_TOOLKIT_ROOT_DIR}/lib64/libcudart.so")
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -9,38 +11,22 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(OpenCV_DIR D:/opencv/opencv/new)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(OpenCV QUIET)
 set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
-        qblueprint.h qblueprint.cpp qblueprint.ui
-        qblueprintnode.h qblueprintnode.cpp
-        qblueprintport.h qblueprintport.cpp
-        qblueprintconnection.h qblueprintconnection.cpp
-        qnodefactory.h qnodefactory.cpp
-        testclass.h testclass.cpp
-#        qinputnode.h qinputnode.cpp
-#        qoutputnode.h qoutputnode.cpp
-        alluse.h alluse.cpp
-        enterlimiter.h enterlimiter.cpp
-        math.h math.cpp
-        imagelabel.h imagelabel.cpp
-        opencv.h opencv.cpp
-        qts.h qts.cpp
+
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(QBlueprint
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        enterlimiter.h enterlimiter.cpp
-        imagelabel.h imagelabel.cpp
-        qts.h qts.cpp
+        include/enterlimiter.h src/enterlimiter.cpp
+        include/imagelabel.h src/imagelabel.cpp
+        include/qts.h src/qts.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET QBlueprint APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -56,6 +42,25 @@ else()
     else()
         add_executable(QBlueprint
             ${PROJECT_SOURCES}
+                src/main.cpp
+                src/mainwindow.cpp
+                include/mainwindow.h
+                include/qblueprint.h src/qblueprint.cpp
+                include/qblueprintnode.h src/qblueprintnode.cpp
+                include/qblueprintport.h src/qblueprintport.cpp
+                include/qblueprintconnection.h src/qblueprintconnection.cpp
+                include/qnodefactory.h src/qnodefactory.cpp
+                include/testclass.h src/testclass.cpp
+                #        qinputnode.h qinputnode.cpp
+                #        qoutputnode.h qoutputnode.cpp
+                include/alluse.h src/alluse.cpp
+                include/enterlimiter.h src/enterlimiter.cpp
+                include/math.h src/math.cpp
+                include/imagelabel.h src/imagelabel.cpp
+                include/opencv.h src/opencv.cpp
+                include/qts.h src/qts.cpp
+                include/ForLoopDebugger.h src/ForLoopDebugger.cpp
+                include/ForLoopTester.h src/ForLoopTester.cpp
         )
     endif()
 endif()

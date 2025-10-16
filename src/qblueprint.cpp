@@ -1,5 +1,4 @@
 #include "qblueprint.h"
-#include "ui_qblueprint.h"
 #include <unordered_map>
 
 QBlueprint::QBlueprint(QWidget *parent)
@@ -571,6 +570,7 @@ void QBlueprint::createControlNode()
     node_condition->setNodeTitle("Condition");
     save_nodes.push_back(node_condition);
 }
+
 void QBlueprint::addOutputNode(DataType dataType)
 {
     QBlueprintNode* node = new QBlueprintNode(Type::OUTPUT,dataType);
@@ -613,10 +613,26 @@ bool QBlueprint::isEventPortConnected(QBlueprintPort* outputPort, QBlueprintPort
     }
     return false;
 }
+void QBlueprint::handleForLoopCompletion(QBlueprintPort* completedPort) {
+    // 找到对应的ForLoop节点
+    QBlueprintNode* forLoopNode = dynamic_cast<QBlueprintNode*>(completedPort->parentItem());
+    if (!forLoopNode) return;
+
+    // 发送完成信号给ForLoop节点
+    for (QBlueprintPort* port : forLoopNode->getInputPorts()) {
+        if (port->name() == "LoopCompleted") {
+            port->receiveData(QVariant::fromValue(true));
+            break;
+        }
+    }
+}
 void QBlueprint::propagateDataFromInitialNode(QBlueprintPort* initialPort)
 {
     if (!initialPort) return;
-
+    if (initialPort->name() == "LoopCompleted") {
+        handleForLoopCompletion(initialPort);
+        return;
+    }
     // 获取初始端口的父节点
     QBlueprintNode* initialNode = dynamic_cast<QBlueprintNode*>(initialPort->parentItem());
     if (!initialNode) return;
@@ -635,20 +651,45 @@ bool QBlueprint::isNumericType(const QString& type)
 // 类型兼容性检查函数
 bool QBlueprint::areTypesCompatible(const QString& type1, const QString& type2)
 {
-    // 如果是相同类型，直接返回 true
-    if (type1 == type2)
-        return true;
+    if (type1 == type2) return true;
 
-    // 数值类型之间相互兼容
-    if (isNumericType(type1) && isNumericType(type2))
+    // 特殊处理：空类型或未知类型
+    if (type1.isEmpty() || type2.isEmpty() || type1 == "QVariant" || type2 == "QVariant") {
         return true;
+    }
 
-    // QString 和 char* 之间相互兼容
-    if ((type1 == "QString" && type2 == "char*") || (type1 == "char*" && type2 == "QString"))
+    // 数值类型兼容性
+    if (isNumericType(type1) && isNumericType(type2)) return true;
+
+    // 字符串类型兼容性
+    if ((type1.contains("String") || type1 == "char*") &&
+        (type2.contains("String") || type2 == "char*")) {
         return true;
+        }
 
-    // 默认情况下认为不兼容
+    // QImage 相关类型兼容性
+    if ((type1.contains("Image") || type1.contains("Pixmap")) &&
+        (type2.contains("Image") || type2.contains("Pixmap"))) {
+        return true;
+        }
+
     return false;
+}
+void QBlueprint::testForLoop()
+{
+    // 找到ForLoop节点的事件输入端口
+    for (QBlueprintNode* node : save_nodes) {
+        if (node->getNodeType() == Type::FORLOOP) {
+            for (QBlueprintPort* port : node->getInputPorts()) {
+                if (port->portType() == QBlueprintPort::EVENT_INPUT) {
+                    // 手动触发事件
+                    port->receiveData(QVariant::fromValue(true));
+                    qDebug() << "Manually triggered ForLoop";
+                    break;
+                }
+            }
+        }
+    }
 }
 
 

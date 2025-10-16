@@ -39,7 +39,11 @@ public:
     void placeNodeInScene(QBlueprintNode *originalNode, const QPointF& mousePos);
     void pushVectorQBlueprintNode(QBlueprintNode* node);
     bool isEventPortConnected(QBlueprintPort *outputPort, QBlueprintPort *inputPort) const;
+
+    void handleForLoopCompletion(QBlueprintPort *completedPort);
+
     void propagateDataFromInitialNode(QBlueprintPort *initialPort);
+    QGraphicsScene *getScene() { return scene; }
 protected:
     void drawBackground(QPainter *painter, const QRectF &rect) override;
     void wheelEvent(QWheelEvent *event) override;
@@ -72,5 +76,7 @@ private:
     void addInputNode(DataType dataType);
     bool isNumericType(const QString &type);
     bool areTypesCompatible(const QString &type1, const QString &type2);
+
+    void testForLoop();
 };
 
