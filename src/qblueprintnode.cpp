@@ -74,6 +74,9 @@ QBlueprintNode* QBlueprintNode::clone() const
         newNode->addInputPort(Type::FORLOOP);
         newNode->addOutputPort(Type::FORLOOP);
     }
+    else if (newNode->nodeType == Type::BEGIN) {
+        newNode->addOutputPort(Type::BEGIN);
+    }
     // 克隆输入端口
     for (QBlueprintPort* port : this->inputPorts) {
         QBlueprintPort* clonedPort = port->clone();
@@ -444,8 +447,10 @@ void QBlueprintNode::addInputPort(enum Type Type)
     }
     else if(Type == Type::BRANCH)
     {
-        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "", dataType, this, getEnumName(dataType));
-        QBlueprintPort *port_Condition = new QBlueprintPort(QBlueprintPort::Input, "Condition", DataType::BOOL, this, getEnumName(dataType));
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_INPUT, "Execute", DataType::BOOL, this, "触发分支判断");
+        QBlueprintPort *port_Condition = new QBlueprintPort(QBlueprintPort::Input, "Condition", DataType::BOOL, this, "分支条件");
+        port->setVarType(QVariant::fromValue(false));
+        port_Condition->setVarType(QVariant::fromValue(false));
         port->setNodeType(nodeType);
         setQVariantType(port);
         port_Condition->setNodeType(nodeType);
@@ -454,7 +459,6 @@ void QBlueprintNode::addInputPort(enum Type Type)
         inputPorts.push_back(port_Condition);
         customNodePortSort();
         addOutputLabel(port, port);
-
     }
     else if(Type == Type::CONDITION)
     {
@@ -547,6 +551,13 @@ void QBlueprintNode::addOutputPort(enum Type Type)
             port->setVarType(QVariant::fromValue(bool()));
             outputPorts.push_back(port);
         }
+    }
+    else if (Type == Type::BEGIN) {
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_TRUE_RETURN, "True", DataType::BOOL, this, getEnumName(dataType));
+        port->setNodeType(nodeType);
+        setQVariantType(port);
+        port->setData(true);
+        outputPorts.push_back(port);
     }
     else if(Type == Type::FORLOOP)  // 添加FORLOOP处理
     {
@@ -1270,6 +1281,34 @@ void QBlueprintNode::processForLoopData(QBlueprintPort* inputPort, const QVarian
     }
 }
 
+void QBlueprintNode::processBranchData(QBlueprintPort* inputPort, const QVariant& data)
+{
+    qDebug() << "=== processBranchData called ===";
+    qDebug() << "Input port:" << (inputPort ? inputPort->name() : "nullptr");
+
+    // 只有Execute端口触发时才处理
+    if (inputPort && inputPort->name() == "Execute") {
+        // 获取条件值
+        QVariant conditionValue = getPortValue("Condition");
+        bool condition = conditionValue.toBool();
+
+        qDebug() << "Branch condition:" << condition;
+
+        // 根据条件触发相应的输出端口
+        for (QBlueprintPort* outputPort : outputPorts) {
+            if (condition && outputPort->name() == "True") {
+                qDebug() << "Triggering True branch";
+                outputPort->setVarType(QVariant::fromValue(true));
+                outputPort->sendDataToConnectedPorts();
+            } else if (!condition && outputPort->name() == "False") {
+                qDebug() << "Triggering False branch";
+                outputPort->setVarType(QVariant::fromValue(true));
+                outputPort->sendDataToConnectedPorts();
+            }
+        }
+    }
+}
+
 void QBlueprintNode::executeForLoopIteration(int index, int end, int step)
 {
     qDebug() << "Executing loop iteration - Index:" << index << "End:" << end << "Step:" << step;
@@ -1355,7 +1394,11 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
         processForLoopData(inputPort, data);
         return;
     }
-    if (nodeType == Type::CONDITION) // condition节点需要计算出bool值出来
+    else if (nodeType == Type::BRANCH) {
+        processBranchData(inputPort, data);
+        return;
+    }
+    else if (nodeType == Type::CONDITION) // condition节点需要计算出bool值出来
     {
         QVariant result;
         bool result_bool;

@@ -820,6 +820,11 @@ void QBlueprint::createControlNode()
     node_condition->setClassName("Control");
     node_condition->setNodeTitle("Condition");
     save_nodes.push_back(node_condition);
+
+    QBlueprintNode* node_begin = new QBlueprintNode(Type::BEGIN);
+    node_begin->setClassName("Control");
+    node_begin->setNodeTitle("Begin");
+    save_nodes.push_back(node_begin);
 }
 
 void QBlueprint::addOutputNode(DataType dataType)

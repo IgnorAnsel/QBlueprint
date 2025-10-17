@@ -19,7 +19,7 @@
 #include <QBrush>
 #include <QFont>
 #define NUM_DATA_TYPES 22
-enum Type{FUNCTION,INPUT,OUTPUT,BRANCH,CONDITION,FORLOOP};
+enum Type{FUNCTION,INPUT,OUTPUT,BRANCH,CONDITION,FORLOOP,BEGIN};
 enum DataType {
     FOR_FUNCTION,          // 为FUNCTION使用
     INT,           // 整型

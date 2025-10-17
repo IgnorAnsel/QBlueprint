@@ -78,6 +78,8 @@ public:
 
     void processForLoopData(QBlueprintPort *inputPort, const QVariant &data);
 
+    void processBranchData(QBlueprintPort *inputPort, const QVariant &data);
+
     void executeForLoopIteration(int index, int end, int step);
 
 protected:
