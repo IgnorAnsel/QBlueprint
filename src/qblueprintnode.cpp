@@ -553,10 +553,9 @@ void QBlueprintNode::addOutputPort(enum Type Type)
         }
     }
     else if (Type == Type::BEGIN) {
-        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_TRUE_RETURN, "True", DataType::BOOL, this, getEnumName(dataType));
+        QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::EVENT_TRUE_RETURN, "True", DataType::BOOL, this, "流程开始触发器");
         port->setNodeType(nodeType);
-        setQVariantType(port);
-        port->setData(true);
+        port->setVarType(QVariant::fromValue(true)); // 设置为true
         outputPorts.push_back(port);
     }
     else if(Type == Type::FORLOOP)  // 添加FORLOOP处理
@@ -1280,7 +1279,20 @@ void QBlueprintNode::processForLoopData(QBlueprintPort* inputPort, const QVarian
         qDebug() << "Loop stopped";
     }
 }
+void QBlueprintNode::processBeginData(QBlueprintPort* inputPort, const QVariant& data)
+{
+    qDebug() << "=== BEGIN Node Processing ===";
 
+    // BEGIN节点不需要输入处理，它总是输出true
+    // 确保所有输出端口都保持true状态
+    for (QBlueprintPort* outputPort : outputPorts) {
+        if (outputPort->name() == "True") {
+            outputPort->setVarType(QVariant::fromValue(true));
+            outputPort->sendDataToConnectedPorts();
+            qDebug() << "BEGIN node sending true to connected ports";
+        }
+    }
+}
 void QBlueprintNode::processBranchData(QBlueprintPort* inputPort, const QVariant& data)
 {
     qDebug() << "=== processBranchData called ===";
@@ -1392,6 +1404,10 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
 
     if (nodeType == Type::FORLOOP) {
         processForLoopData(inputPort, data);
+        return;
+    }
+    else if (nodeType == Type::BEGIN) {
+        processBeginData(inputPort, data);
         return;
     }
     else if (nodeType == Type::BRANCH) {

@@ -139,9 +139,17 @@ void QBlueprintConnection::setEndPort(QBlueprintPort *endPort)
     m_endPort = endPort;
     if (m_endPort)
     {
-        // 如果存在终点端口，更新终点坐标为端口的中心
         updatePosition(m_startPort->centerPos(), m_endPort->centerPos());
-        m_startPort->sendDataToConnectedPorts();
+
+        // 如果是BEGIN节点的端口，立即发送true
+        QBlueprintNode* startNode = dynamic_cast<QBlueprintNode*>(m_startPort->parentItem());
+        if (startNode && startNode->getNodeType() == Type::BEGIN) {
+            qDebug() << "BEGIN node connection established, sending true immediately";
+            m_startPort->setVarType(QVariant::fromValue(true));
+            m_startPort->sendDataToConnectedPorts();
+        } else {
+            m_startPort->sendDataToConnectedPorts();
+        }
     }
 }
 QBlueprintPort* QBlueprintConnection::startPort() const
