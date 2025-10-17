@@ -1,5 +1,7 @@
 #include "qblueprint.h"
 #include <unordered_map>
+#include <QWidgetAction>
+#include "clickableframe.h"
 
 QBlueprint::QBlueprint(QWidget *parent)
     : QGraphicsView(parent), scene(new QGraphicsScene(this))  // 初始化场景
@@ -158,105 +160,354 @@ QBlueprint::~QBlueprint()
 }
 void QBlueprint::contextMenuEvent(QContextMenuEvent* event)
 {
-    // 创建右键菜单（主菜单，一级菜单）
+    // 创建右键菜单
     QMenu contextMenu;
     QPointF scenePos = mapToScene(event->pos());
+    m_menuActions.clear(); // 清除之前的菜单项缓存
 
-    // 设置 contextMenu（一级菜单）的样式表，保留圆角
+    // 设置样式表
     contextMenu.setStyleSheet(
         "QMenu { "
-        "   background-color: #353535; "  // 一级菜单背景色
-        "   color: white; "               // 一级菜单文字颜色
-        "   border: 2px solid #5A5A5A; "  // 一级菜单边框
-        "   border-radius: 8px; "         // 圆角边框
+        "   background-color: #353535; "
+        "   color: white; "
+        "   border: 2px solid #5A5A5A; "
+        "   border-radius: 8px; "
         "} "
         "QMenu::item:selected { "
-        "   background-color: #2A82DA; "  // 鼠标悬停时的背景色（一级菜单）
-        "   color: white; "               // 鼠标悬停时的文字颜色
-        "   border-radius: 4px; "          // 圆角边框
+        "   background-color: #2A82DA; "
+        "   color: white; "
+        "   border-radius: 4px; "
         "}"
         );
 
-    // 使用一个 map 来临时存储类名和对应的节点列表
-    QMap<QString, QList<QBlueprintNode*>> classNodeMap;
-    for (QBlueprintNode* node : save_nodes) {
-        QString className = node->getClassName();
-        classNodeMap[className].append(node);
+    // 添加搜索框
+    QWidgetAction* searchAction = new QWidgetAction(&contextMenu);
+    QFrame* searchFrame = new QFrame();
+    QHBoxLayout* searchLayout = new QHBoxLayout(searchFrame);
+    searchLayout->setContentsMargins(5, 5, 5, 5);
+
+    m_searchEdit = new QLineEdit(searchFrame);
+    m_searchEdit->setPlaceholderText("Search...");
+    m_searchEdit->setClearButtonEnabled(true);
+    m_searchEdit->setText(m_searchText); // 设置当前搜索文本
+    m_searchEdit->setStyleSheet(
+        "QLineEdit {"
+        "   background-color: #454545;"
+        "   color: white;"
+        "   border: 1px solid #5A5A5A;"
+        "   border-radius: 4px;"
+        "   padding: 3px;"
+        "}"
+        "QLineEdit:focus {"
+        "   border: 1px solid #2A82DA;"
+        "}"
+    );
+    m_searchEdit->installEventFilter(this);
+    searchLayout->addWidget(m_searchEdit);
+    searchFrame->setLayout(searchLayout);
+    searchAction->setDefaultWidget(searchFrame);
+    contextMenu.addAction(searchAction);
+
+    // 连接搜索框的信号 - 使用延迟过滤
+    connect(m_searchEdit, &QLineEdit::textChanged, this, [this](const QString& text) {
+        m_searchText = text;
+        filterMenuItems();
+    });
+
+    // 添加收藏夹菜单
+    QMenu* favoritesMenu = contextMenu.addMenu("★ Favorites");
+    favoritesMenu->setStyleSheet(
+        "QMenu { "
+        "   background-color: #FFD700; "  // 金色背景
+        "   color: black; "
+        "   border: 2px solid #FFA500; "   // 橙色边框
+        "   border-radius: 8px; "
+        "} "
+        "QMenu::item:selected { "
+        "   background-color: #FFA500; "   // 橙色悬停
+        "   color: black; "
+        "   border-radius: 4px; "
+        "}"
+        );
+
+    // 添加收藏的节点
+    for (QBlueprintNode* node : m_favoriteNodes) {
+        addNodeToMenu(favoritesMenu, node, scenePos);
     }
 
-    // 遍历每个类
+    // 分组节点
+    QMap<QString, QList<QBlueprintNode*>> classNodeMap;
+    for (QBlueprintNode* node : save_nodes) {
+        classNodeMap[node->getClassName()].append(node);
+    }
+
+    // 创建分类菜单
     for (auto it = classNodeMap.begin(); it != classNodeMap.end(); ++it) {
         QString className = it.key();
         QList<QBlueprintNode*> nodes = it.value();
 
-        // 创建类名的一级菜单（作为 contextMenu 的子菜单）
         QMenu* classMenu = contextMenu.addMenu(className);
 
-        // 根据类名设置不同的样式表，并保留圆角
+        // 设置分类样式
         if (className == "Input") {
-            // 设置 Input 类的样式：绿色（二级菜单），带圆角
             classMenu->setStyleSheet(
-                "QMenu { "
-                "   background-color: #DFFFD6; "  // 二级菜单的绿色背景
-                "   color: black; "               // 二级菜单的文字颜色
-                "   border: 2px solid green; "     // 二级菜单的绿色边框
-                "   border-radius: 8px; "          // 圆角边框
-                "} "
-                "QMenu::item:selected { "
-                "   background-color: #8CD98C; "  // 鼠标悬停时的绿色背景
-                "   color: black; "               // 鼠标悬停时的文字颜色
-                "   border-radius: 4px; "          // 圆角边框
-                "}"
-                );
+            "QMenu { "
+                           "   background-color: #DFFFD6; "  // 二级菜单的绿色背景
+                           "   color: black; "               // 二级菜单的文字颜色
+                           "   border: 2px solid green; "     // 二级菜单的绿色边框
+                           "   border-radius: 8px; "          // 圆角边框
+                           "} "
+                           "QMenu::item:selected { "
+                           "   background-color: #8CD98C; "  // 鼠标悬停时的绿色背景
+                           "   color: black; "               // 鼠标悬停时的文字颜色
+                           "   border-radius: 4px; "          // 圆角边框
+                           "}"
+                           );
         } else if (className == "Output") {
-            // 设置 Output 类的样式：红色（二级菜单），带圆角
             classMenu->setStyleSheet(
-                "QMenu { "
-                "   background-color: #FFD6D6; "  // 二级菜单的红色背景
-                "   color: black; "               // 二级菜单的文字颜色
-                "   border: 2px solid red; "       // 二级菜单的红色边框
-                "   border-radius: 8px; "          // 圆角边框
-                "} "
-                "QMenu::item:selected { "
-                "   background-color: #FF7A7A; "  // 鼠标悬停时的红色背景
-                "   color: black; "               // 鼠标悬停时的文字颜色
-                "   border-radius: 4px; "          // 圆角边框
-                "}"
-                );
+            "QMenu { "
+                            "   background-color: #FFD6D6; "  // 二级菜单的红色背景
+                            "   color: black; "               // 二级菜单的文字颜色
+                            "   border: 2px solid red; "       // 二级菜单的红色边框
+                            "   border-radius: 8px; "          // 圆角边框
+                            "} "
+                            "QMenu::item:selected { "
+                            "   background-color: #FF7A7A; "  // 鼠标悬停时的红色背景
+                            "   color: black; "               // 鼠标悬停时的文字颜色
+                            "   border-radius: 4px; "          // 圆角边框
+                            "}");
         } else {
-            // 设置其他类的样式：蓝色（二级菜单），带圆角
             classMenu->setStyleSheet(
-                "QMenu { "
-                "   background-color: #D6E6FF; "  // 二级菜单的蓝色背景
-                "   color: black; "               // 二级菜单的文字颜色
-                "   border: 2px solid blue; "      // 二级菜单的蓝色边框
-                "   border-radius: 8px; "          // 圆角边框
-                "} "
-                "QMenu::item:selected { "
-                "   background-color: #7A9EFF; "  // 鼠标悬停时的蓝色背景
-                "   color: black; "               // 鼠标悬停时的文字颜色
-                "   border-radius: 4px; "          // 圆角边框
-                "}"
-                );
+            "QMenu { "
+                            "   background-color: #D6E6FF; "  // 二级菜单的蓝色背景
+                            "   color: black; "               // 二级菜单的文字颜色
+                            "   border: 2px solid blue; "      // 二级菜单的蓝色边框
+                            "   border-radius: 8px; "          // 圆角边框
+                            "} "
+                            "QMenu::item:selected { "
+                            "   background-color: #7A9EFF; "  // 鼠标悬停时的蓝色背景
+                            "   color: black; "               // 鼠标悬停时的文字颜色
+                            "   border-radius: 4px; "          // 圆角边框
+                            "}");
         }
 
-        // 添加该类的所有函数到二级菜单中
+        // 添加节点项
         for (QBlueprintNode* node : nodes) {
-            QString functionName = node->getNodeTitle();
-            QAction* action = classMenu->addAction(functionName);
-
-            // 使用 lambda 表达式捕获节点信息
-            connect(action, &QAction::triggered, [this, node, scenePos]() {
-                placeNodeInScene(node, scenePos);
-            });
+            addNodeToMenu(classMenu, node, scenePos);
         }
     }
 
-    // 显示菜单
+    // 保存菜单指针以便后续刷新
+    m_currentContextMenu = &contextMenu;
+    m_currentEventPos = event->globalPos();
+
+    // 初始过滤
+    filterMenuItems();
+
     contextMenu.exec(event->globalPos());
+
+    // 菜单关闭后清除指针
+    m_currentContextMenu = nullptr;
+    m_searchEdit = nullptr;
+    m_menuActions.clear();
 }
 
+// 添加辅助函数判断节点是否应该显示
+bool QBlueprint::shouldShowNode(QBlueprintNode* node, const QString& searchText)
+{
+    if (searchText.isEmpty()) return true;
 
+    QString nodeTitle = node->getNodeTitle();
+    QString className = node->getClassName();
+
+    return nodeTitle.contains(searchText, Qt::CaseInsensitive) ||
+           className.contains(searchText, Qt::CaseInsensitive);
+}
+
+// 过滤菜单项
+void QBlueprint::filterMenuItems()
+{
+    if (!m_currentContextMenu) return;
+
+    // 遍历所有菜单和菜单项
+    for (auto menuIt = m_menuActions.begin(); menuIt != m_menuActions.end(); ++menuIt) {
+        QMenu* menu = menuIt.key();
+        QList<QWidgetAction*> actions = menuIt.value();
+
+        // 检查该菜单是否有可见项
+        bool hasVisibleItems = false;
+
+        for (QWidgetAction* action : actions) {
+            ClickableFrame* frame = qobject_cast<ClickableFrame*>(action->defaultWidget());
+            if (!frame) continue;
+
+            // 获取节点指针
+            QVariant nodeVar = frame->property("nodePtr");
+            if (!nodeVar.isValid()) continue;
+
+            QBlueprintNode* node = nodeVar.value<QBlueprintNode*>();
+            if (!node) continue;
+
+            // 根据搜索文本决定是否显示
+            bool visible = shouldShowNode(node, m_searchText);
+            action->setVisible(visible);
+
+            if (visible) {
+                hasVisibleItems = true;
+            }
+        }
+
+        // 设置菜单可见性
+        menu->menuAction()->setVisible(hasVisibleItems);
+    }
+
+    // 更新菜单布局
+    m_currentContextMenu->adjustSize();
+}
+
+// 修改后的 addNodeToMenu 函数
+void QBlueprint::addNodeToMenu(QMenu* menu, QBlueprintNode* node, const QPointF& scenePos)
+{
+    // 创建自定义菜单项
+    QWidgetAction* widgetAction = new QWidgetAction(menu);
+    ClickableFrame* frame = new ClickableFrame();
+    frame->setObjectName("menuItemFrame");
+    frame->setProperty("nodePtr", QVariant::fromValue(node)); // 存储节点指针
+
+    QHBoxLayout* layout = new QHBoxLayout(frame);
+    layout->setContentsMargins(5, 2, 5, 2);
+
+    // 节点名称标签
+    QLabel* label = new QLabel(node->getNodeTitle(), frame);
+    label->setStyleSheet("color: black; background: transparent;");
+    layout->addWidget(label);
+
+    QLabel* starLabel = new QLabel(frame);
+    starLabel->setAlignment(Qt::AlignCenter);
+    starLabel->setFixedSize(20, 20);
+    starLabel->setStyleSheet("color: gold; font-weight: bold; background: transparent;");
+    starLabel->setText(m_favoriteNodes.contains(node) ? "★" : "☆");
+    starLabel->setProperty("nodePtr", QVariant::fromValue(node)); // 存储节点指针
+
+    // 使星标可点击
+    starLabel->setCursor(Qt::PointingHandCursor);
+    starLabel->installEventFilter(this);
+
+    layout->addWidget(starLabel);
+
+    frame->setLayout(layout);
+    widgetAction->setDefaultWidget(frame);
+    menu->addAction(widgetAction);
+
+    // 存储菜单项以便过滤
+    if (!m_menuActions.contains(menu)) {
+        m_menuActions[menu] = QList<QWidgetAction*>();
+    }
+    m_menuActions[menu].append(widgetAction);
+
+    // 设置frame的样式表
+    frame->setStyleSheet(
+        "ClickableFrame#menuItemFrame {"
+        "   background-color: transparent;"
+        "   border-radius: 4px;"
+        "}"
+        "ClickableFrame#menuItemFrame:hover {"
+        "   background-color: #2A82DA;"
+        "}"
+    );
+
+    // 节点点击事件
+    connect(frame, &ClickableFrame::clicked, [this, node, scenePos]() {
+        placeNodeInScene(node, scenePos);
+    });
+
+    // 星标点击事件
+    connect(starLabel, &QLabel::linkActivated, [this, node]() {
+        toggleFavorite(node);
+    });
+}
+
+// 事件过滤器
+bool QBlueprint::eventFilter(QObject* obj, QEvent* event)
+{
+    // 处理星标点击
+    if (event->type() == QEvent::MouseButtonPress) {
+        QLabel* starLabel = qobject_cast<QLabel*>(obj);
+        if (starLabel) {
+            // 标记正在点击星标
+            m_isClickingStar = true;
+
+            // 获取存储的节点指针
+            QVariant nodeVar = starLabel->property("nodePtr");
+            if (nodeVar.isValid()) {
+                QBlueprintNode* node = nodeVar.value<QBlueprintNode*>();
+                if (node) {
+                    toggleFavorite(node);
+                    return true;
+                }
+            }
+        }
+    }
+    else if (event->type() == QEvent::MouseButtonRelease) {
+        // 星标点击完成
+        if (m_isClickingStar) {
+            m_isClickingStar = false;
+        }
+    }
+
+    // 处理搜索框点击
+    if (obj == m_searchEdit) {
+        if (event->type() == QEvent::MouseButtonPress) {
+            // 标记正在点击搜索框
+            m_isClickingSearch = true;
+
+            // 阻止菜单关闭
+            return true;
+        }
+        else if (event->type() == QEvent::MouseButtonRelease) {
+            // 搜索框点击完成
+            m_isClickingSearch = false;
+        }
+        else if (event->type() == QEvent::FocusOut) {
+            // 当搜索框失去焦点时，如果不是因为点击其他地方，则恢复焦点
+            if (!m_isClickingStar && !m_isClickingSearch) {
+                m_searchEdit->setFocus();
+                return true;
+            }
+        }
+    }
+
+    return QObject::eventFilter(obj, event);
+}
+
+// 切换收藏状态
+void QBlueprint::toggleFavorite(QBlueprintNode* node)
+{
+    if (m_favoriteNodes.contains(node)) {
+        m_favoriteNodes.removeOne(node);
+    } else {
+        m_favoriteNodes.append(node);
+    }
+
+    // 刷新当前打开的菜单
+    if (m_currentContextMenu) {
+        // 关闭当前菜单
+        m_currentContextMenu->close();
+
+        // 延迟重新打开菜单
+        QTimer::singleShot(50, this, [this]() {
+            if (m_currentEventPos.isNull()) return;
+
+            // 创建新的右键菜单事件
+            QContextMenuEvent event(QContextMenuEvent::Mouse,
+                                   mapFromGlobal(m_currentEventPos),
+                                   m_currentEventPos);
+
+            // 调用右键菜单处理函数
+            contextMenuEvent(&event);
+        });
+    }
+}
 void QBlueprint::placeNodeInScene(QBlueprintNode* originalNode, const QPointF& mousePos)
 {
     // 使用 clone 方法创建节点的副本

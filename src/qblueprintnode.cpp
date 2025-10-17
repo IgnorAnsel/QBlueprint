@@ -409,7 +409,7 @@ QBlueprintPort* QBlueprintNode::addOutputPort(const QString &name)
     if(dataType == DataType::FOR_FUNCTION)
     {
         datatype = getEnumFromName(name);
-        qDebug() << "eaesaeasease" << datatype;
+        // qDebug() << "eaesaeasease" << datatype;
     }
     QBlueprintPort *port = new QBlueprintPort(QBlueprintPort::Output, name, datatype, this, getEnumName(datatype));
     port->setNodeType(nodeType);

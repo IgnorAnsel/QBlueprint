@@ -12,6 +12,8 @@
 
 /****************************************************/
 // 在这里添加你的头文件
+#include <QWidgetAction>
+
 #include "testclass.h"
 #include "math.h"
 #include "qts.h"
@@ -52,6 +54,19 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
 
     void contextMenuEvent(QContextMenuEvent *event) override;
+
+    bool shouldShowNode(QBlueprintNode *node, const QString &searchText);
+
+    void filterMenuItems();
+
+    void onSearchTextChanged(const QString &text);
+
+    void addNodeToMenu(QMenu *menu, QBlueprintNode *node, const QPointF &scenePos);
+
+    bool eventFilter(QObject *obj, QEvent *event);
+
+    void toggleFavorite(QBlueprintNode *node);
+
 private:
     const double minScaleFactor = 0.1;
     const double maxScaleFactor = 8.0;
@@ -59,8 +74,15 @@ private:
 
     std::vector<QBlueprintNode*> save_nodes;    // 用于存储所有节点
     std::vector<QBlueprintNode*> scene_nodes;   // 用于存储场景中的节点
+    QList<QBlueprintNode*> m_favoriteNodes;     // 用于存储收藏节点
 
-
+    QMenu* m_currentContextMenu = nullptr; // 当前打开的菜单
+    QPoint m_currentEventPos;              // 当前菜单的位置
+    QString m_searchText;                  // 当前搜索文本
+    QLineEdit* m_searchEdit = nullptr;     // 搜索框指针
+    bool m_isClickingStar = false;         // 标记是否正在点击星标
+    bool m_isClickingSearch = false;       // 标记是否正在点击搜索框
+    QMap<QMenu*, QList<QWidgetAction*>> m_menuActions; // 存储菜单项以便过滤
     // 添加和移除连接的方法
     void addConnection(QBlueprintConnection* connection);
 

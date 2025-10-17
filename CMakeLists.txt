@@ -61,6 +61,7 @@ else()
                 include/qts.h src/qts.cpp
                 include/ForLoopDebugger.h src/ForLoopDebugger.cpp
                 include/ForLoopTester.h src/ForLoopTester.cpp
+                include/clickableframe.h
         )
     endif()
 endif()

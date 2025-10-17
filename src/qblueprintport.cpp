@@ -7,7 +7,7 @@ QBlueprintPort::QBlueprintPort(PortType type, const QString &name, DataType data
     setFlag(QGraphicsItem::ItemIsMovable, false);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true); // 允许发送几何变化
-    qDebug() << "brief: " << brief << "portBrief:" << portBrief;
+    // qDebug() << "brief: " << brief << "portBrief:" << portBrief;
     setAcceptHoverEvents(true);
     setQVariantType();
     setZValue(2);
