@@ -128,6 +128,7 @@ private:
     QVariant mathFunctions();
     QVariant opencvFunctions();
     QVariant qtsFunctions();
+    QVariant keysimulatorFunctions();
 
 };
 

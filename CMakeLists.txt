@@ -62,6 +62,8 @@ else()
                 include/ForLoopDebugger.h src/ForLoopDebugger.cpp
                 include/ForLoopTester.h src/ForLoopTester.cpp
                 include/clickableframe.h
+                include/keyconstants.h
+                include/keysimulator.h src/keysimulator.cpp
         )
     endif()
 endif()

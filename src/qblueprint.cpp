@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <QWidgetAction>
 #include "clickableframe.h"
+#include "keysimulator.h"
 
 QBlueprint::QBlueprint(QWidget *parent)
     : QGraphicsView(parent), scene(new QGraphicsScene(this))  // 初始化场景
@@ -129,9 +130,71 @@ void QBlueprint::createBlueprintNodes() // 使用工厂方法基于函数生成�
 
     //QBlueprintNode* opencv_convertToGray_node = QNodeFactory::createNodeFromFunction(this, &opencv::convertToGray, "convertToGray", "opencv");
 #endif
+    createKeySimulatorNodes();
     classifyNodes();
 }
+void QBlueprint::createKeySimulatorNodes()
+{
+    // 按键按下节点
+    QBlueprintNode* keyPressNode = QNodeFactory::createNodeFromFunction(
+        this,
+        &KeySimulator::simulateKeyPress,
+        KeySimulator::inputNames_simulateKeyPress,
+        KeySimulator::outputName_simulateKeyPress,
+        "simulateKeyPress",
+        "KeySimulator"
+    );
 
+    // 按键释放节点
+    QBlueprintNode* keyReleaseNode = QNodeFactory::createNodeFromFunction(
+        this,
+        &KeySimulator::simulateKeyRelease,
+        KeySimulator::inputNames_simulateKeyRelease,
+        KeySimulator::outputName_simulateKeyRelease,
+        "simulateKeyRelease",
+        "KeySimulator"
+    );
+
+    // 按键点击节点
+    QBlueprintNode* keyClickNode = QNodeFactory::createNodeFromFunction(
+        this,
+        &KeySimulator::simulateKeyClick,
+        KeySimulator::inputNames_simulateKeyClick,
+        KeySimulator::outputName_simulateKeyClick,
+        "simulateKeyClick",
+        "KeySimulator"
+    );
+
+    // 组合键节点
+    QBlueprintNode* keyCombinationNode = QNodeFactory::createNodeFromFunction(
+        this,
+        &KeySimulator::simulateKeyCombination,
+        KeySimulator::inputNames_simulateKeyCombination,
+        KeySimulator::outputName_simulateKeyCombination,
+        "simulateKeyCombination",
+        "KeySimulator"
+    );
+
+    // 文本输入节点
+    QBlueprintNode* textInputNode = QNodeFactory::createNodeFromFunction(
+        this,
+        &KeySimulator::simulateTextInput,
+        KeySimulator::inputNames_simulateTextInput,
+        KeySimulator::outputName_simulateTextInput,
+        "simulateTextInput",
+        "KeySimulator"
+    );
+
+    // 设置目标窗口节点
+    QBlueprintNode* setTargetWindowNode = QNodeFactory::createNodeFromFunction(
+        this,
+        &KeySimulator::setTargetWindow,
+        KeySimulator::inputNames_setTargetWindow,
+        KeySimulator::outputName_setTargetWindow,
+        "setTargetWindow",
+        "KeySimulator"
+    );
+}
 void QBlueprint::classifyNodes()
 {
     std::unordered_map<QString, std::vector<QString>> classifiedNodes;

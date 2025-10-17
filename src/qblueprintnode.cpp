@@ -1524,6 +1524,8 @@ void QBlueprintNode::processData(QBlueprintPort* inputPort, const QVariant& data
 #endif
     else if(class_name == "Qts")
         result = qtsFunctions();
+    else if (class_name == "KeySimulator")
+        result = keysimulatorFunctions();
     if(inputPort != nullptr)
     {
         if(inputPort->getNodeType() == Type::FUNCTION)
@@ -1636,6 +1638,15 @@ QVariant QBlueprintNode::qtsFunctions()
 
     return result;
 }
+
+QVariant QBlueprintNode::keysimulatorFunctions() {
+    QVariant result;
+    KeySimulator *key_simulator = new KeySimulator();
+    if (m_name == "simulateKeyPress") {
+        key_simulator->simulateKeyPress(inputPorts[1]->data().toInt());
+    }
+}
+
 void QBlueprintNode::addLabelToPort(QBlueprintPort* port, const QString &text)
 {
     QLabel* label = new QLabel(text);

@@ -16,6 +16,7 @@
 
 #include "testclass.h"
 #include "math.h"
+#include "keysimulator.h"
 #include "qts.h"
 #ifdef OPENCV_FOUND
 #include "opencv.h"
@@ -36,8 +37,9 @@ public:
     std::vector<QBlueprintConnection*> connections;
     //void addBlueprintNode(QString funcname);
     void createBlueprintNodes();
-    static int add(int a, int b, int c);
-    static int deletea(int a);
+
+    void createKeySimulatorNodes();
+
     void placeNodeInScene(QBlueprintNode *originalNode, const QPointF& mousePos);
     void pushVectorQBlueprintNode(QBlueprintNode* node);
     bool isEventPortConnected(QBlueprintPort *outputPort, QBlueprintPort *inputPort) const;
